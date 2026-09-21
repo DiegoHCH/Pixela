@@ -63,6 +63,11 @@ test('arranca y enseña la placa vacía', async () => {
   // Sin imagen no hay recorte, ni previsualización, ni acento derivado.
   expect(target.textContent).not.toContain('Recorte')
 
+  // El inventario se alcanza desde el primer momento: tus cuentas existen
+  // aunque no haya patrón. Estuvo escondido tras «convertir una imagen», y
+  // esto es lo que lo habría dicho.
+  expect(target.textContent).toContain('Mis cuentas')
+
   unmount(app)
   target.remove()
 })
@@ -112,6 +117,32 @@ test('con una imagen abierta llega hasta el patrón', async () => {
   expect(target.textContent).toContain(project.total.toLocaleString())
 
   project.close()
+  unmount(app)
+  target.remove()
+})
+
+test('el inventario se abre y se cierra desde la app vacía', async () => {
+  const { default: App } = await import('./App.svelte')
+  const { project } = await import('../state/project.svelte')
+
+  const target = document.createElement('div')
+  document.body.appendChild(target)
+  const app = mount(App, { target })
+  flushSync()
+
+  project.openInventory()
+  flushSync()
+  expect(project.phase).toBe('inventory')
+  expect(target.textContent).toContain('Catálogo Artkal S')
+  expect(target.textContent).toContain('colores marcados')
+  // La rejilla trae el catálogo entero, no sólo lo del cajón.
+  expect(target.textContent).toContain('S100')
+
+  project.closeInventory()
+  flushSync()
+  expect(project.phase).toBe('crop')
+  expect(target.textContent).toContain('Arrastra una imagen aquí')
+
   unmount(app)
   target.remove()
 })
