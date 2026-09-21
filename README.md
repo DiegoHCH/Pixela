@@ -6,10 +6,10 @@ Subes una foto, eliges **cuántas placas quieres usar**, y la app la convierte e
 patrón con tus cuentas reales: dividido por placas, con la lista de lo que hace falta
 y las coordenadas para montarlo.
 
-Estado: **se puede cargar una foto, encuadrarla en placas y ver el patrón en
-vivo.** El pipeline entero —rejilla, cuenta más cercana en CIELAB, difuminado y
-tope de colores— está escrito como funciones puras y con tests. Falta el render
-grande, la lista de la compra y exportar.
+Estado: **funciona de punta a punta.** Cargas una foto, la encuadras en placas,
+la conviertes, ves el patrón con su lista de cuentas y lo exportas como PNG —
+completo o placa a placa. Lo que falta es la segunda mitad de la v1: ajustes de
+imagen, la vista por tanda, el modo símbolos, imprimir y el Web Worker.
 
 ---
 
@@ -19,7 +19,7 @@ grande, la lista de la compra y exportar.
 |---|---|
 | `docs/plan.html` | El plan completo: alcance, pipeline, stack, fases y las decisiones con su porqué. Diez secciones, sin preguntas abiertas. |
 | `docs/sistema-de-diseno.html` | Fundamentos, biblioteca de componentes y las 22 pantallas (14 escritorio + 8 móvil), en tema día y noche. |
-| `src/lib/` | El pipeline: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `crop.ts`, `boards.ts`, `accent.ts` y `render.ts`. Sin DOM, con sus tests al lado. |
+| `src/lib/` | El pipeline: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `crop.ts`, `boards.ts`, `accent.ts`, `render.ts` y `export.ts`. Sin DOM, con sus tests al lado. |
 | `src/state/` | Lo que sí toca el navegador: cargar el archivo, el tema y el proyecto abierto. |
 | `src/ui/` | Las pantallas. |
 | `src/lib/paleta-de-diego.json` | Los 23 colores reales de la caja, extraídos de una foto. **Es código, no documentación**, y por eso vive aquí y no en `docs/`. |
@@ -71,13 +71,19 @@ viajar al resto del pipeline: contar, dibujar y la lista de la compra. Por eso
 
 ## Lo que sigue
 
-1. El patrón a tamaño grande en el lienzo, con las líneas de placa y el contador.
-2. Lista de colores con cantidades, y exportar PNG.
-3. La vista por tanda, con las coordenadas corridas de lado a lado.
+La segunda mitad de la v1, «que quede bien»:
 
-Después, la segunda mitad de la v1: ajustes de imagen, el tope de colores como
-control principal, la vista por tanda, el acento derivado, y mover el pipeline
-al Web Worker.
+1. Ajustes de brillo, contraste y saturación antes de cuantizar.
+2. Detección del tipo de imagen al cargar, con el modo siempre visible.
+3. La vista por tanda, con las coordenadas corridas de lado a lado y el aviso
+   de desmoldar al terminar.
+4. Modo símbolos, CSV e impresión.
+5. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Es lo
+   que separa una demo de una herramienta, y no puede saltarse.
+6. PWA: manifiesto, iconos, service worker e instalación.
+
+Y el móvil de verdad: hoja inferior de dos alturas con las tres pestañas, que
+hoy son tres columnas apiladas.
 
 ---
 

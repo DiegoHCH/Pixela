@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { LOCALES, i18n } from '../i18n/index.svelte'
+  import { LOCALES, i18n, type MessageKey } from '../i18n/index.svelte'
   import { accentOf } from '../lib/accent'
+  import { exportPatternPng } from '../state/export-png'
   import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
   import { project } from '../state/project.svelte'
   import { applyAccent, theme } from '../state/theme.svelte'
@@ -12,9 +13,19 @@
   import PatternStage from './PatternStage.svelte'
   import Rail from './Rail.svelte'
 
+  type Failure = LoadFailure | 'export'
+
+  /** Título y explicación de cada fallo, para no construir claves a mano. */
+  const ERROR_KEYS = {
+    type: ['error.type.title', 'error.type.body'],
+    decode: ['error.decode.title', 'error.decode.body'],
+    export: ['error.export.title', 'error.export.body'],
+  } as const satisfies Record<Failure, readonly [MessageKey, MessageKey]>
+
   let input = $state<HTMLInputElement | null>(null)
   let dragging = $state(false)
-  let failure = $state<LoadFailure | null>(null)
+  let failure = $state<Failure | null>(null)
+  let exporting = $state(false)
   let dragDepth = 0
 
   async function open(file: File | null) {
@@ -44,6 +55,31 @@
     // Contado por profundidad: entrar en un hijo dispara un «leave» del padre.
     dragDepth = Math.max(0, dragDepth - 1)
     if (dragDepth === 0) dragging = false
+  }
+
+  /**
+   * Exporta lo que estás mirando: el patrón completo, o la placa señalada como
+   * hoja suelta. Si hay un color aislado, sale la hoja de ese color.
+   */
+  async function exportPng() {
+    const pattern = project.selectedBoardPattern ?? project.pattern
+    if (!pattern || !project.image || exporting) return
+
+    exporting = true
+    failure = null
+    try {
+      const single = project.selectedBoard != null
+      await exportPatternPng(pattern, project.palette, {
+        source: project.image.name,
+        board: single ? undefined : project.board,
+        boardNumber: single ? project.selectedBoard! + 1 : undefined,
+        only: project.isolated,
+      })
+    } catch {
+      failure = 'export'
+    } finally {
+      exporting = false
+    }
   }
 
   function onPaste(event: ClipboardEvent) {
@@ -110,6 +146,13 @@
         <button type="button" class="ghost" onclick={() => input?.click()}>
           {i18n.t('bar.open')}
         </button>
+        <button type="button" class="primary" disabled={exporting} onclick={exportPng}>
+          {exporting
+            ? i18n.t('bar.exporting')
+            : project.selectedBoard != null
+              ? i18n.t('bar.exportBoard', { n: project.selectedBoard + 1 })
+              : i18n.t('bar.export')}
+        </button>
       {:else if project.image}
         <button type="button" class="ghost" onclick={() => project.close()}>
           {i18n.t('bar.cancel')}
@@ -128,8 +171,8 @@
   {#if failure}
     <div class="error" role="alert">
       <div>
-        <p class="et">{i18n.t(failure === 'type' ? 'error.type.title' : 'error.decode.title')}</p>
-        <p class="ed">{i18n.t(failure === 'type' ? 'error.type.body' : 'error.decode.body')}</p>
+        <p class="et">{i18n.t(ERROR_KEYS[failure][0])}</p>
+        <p class="ed">{i18n.t(ERROR_KEYS[failure][1])}</p>
       </div>
       <button type="button" class="ghost" onclick={() => (failure = null)}>
         {i18n.t('error.dismiss')}
@@ -293,6 +336,11 @@
     padding: 7px 15px;
     font-size: 13px;
     font-weight: 600;
+  }
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
   }
 
   button.ghost {
