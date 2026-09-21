@@ -140,14 +140,22 @@
         >
       </div>
 
+      <!--
+        El inventario se abre siempre, también con la app vacía: tus cuentas
+        existen aunque no haya ningún patrón abierto. Estaba metido dentro de la
+        rama del patrón, y eso lo dejaba inalcanzable hasta convertir una imagen.
+      -->
+      {#if project.phase !== 'inventory'}
+        <button type="button" class="ghost" onclick={() => project.openInventory()}>
+          {i18n.t('bar.inventory')}
+        </button>
+      {/if}
+
       {#if project.phase === 'inventory'}
         <button type="button" class="primary" onclick={() => project.closeInventory()}>
           {i18n.t('bar.done')}
         </button>
       {:else if project.phase === 'pattern'}
-        <button type="button" class="ghost" onclick={() => project.openInventory()}>
-          {i18n.t('bar.inventory')}
-        </button>
         <button type="button" class="ghost" onclick={() => project.backToCrop()}>
           {i18n.t('bar.back')}
         </button>
