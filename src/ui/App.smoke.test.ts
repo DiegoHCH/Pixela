@@ -103,7 +103,9 @@ test('con una imagen abierta llega hasta el patrón', async () => {
 
   expect(target.textContent).toContain('Recorte')
   expect(target.textContent).toContain('Convertir a patrón')
-  expect(target.textContent).toContain('prueba.png')
+  // El nombre ya no es una etiqueta: es el campo que nombra lo que exportas.
+  const title = target.querySelector<HTMLInputElement>('input.title')
+  expect(title?.value).toBe('prueba')
 
   project.convert()
   flushSync()

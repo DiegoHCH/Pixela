@@ -8,6 +8,7 @@ const en: typeof es = {
   'bar.cancel': 'Cancel',
   'bar.convert': 'Convert to pattern',
   'bar.back': 'Back to the crop',
+  'bar.name': 'Pattern name',
   'bar.noFile': 'No pattern',
   'bar.inventory': 'My beads',
   'bar.done': 'Done',
