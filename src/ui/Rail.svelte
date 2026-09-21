@@ -1,5 +1,6 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
+  import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
   import BoardPicker from './BoardPicker.svelte'
 
@@ -119,6 +120,20 @@
         <input type="checkbox" checked={project.dither} onchange={() => (project.dither = !project.dither)} />
         <span>{i18n.t('rail.dither')}</span>
       </label>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          checked={project.onlyOwned}
+          onchange={() => project.setOnlyOwned(!project.onlyOwned)}
+        />
+        <span>{i18n.t('rail.onlyOwned')}</span>
+      </label>
+      <button type="button" class="quiet" onclick={() => project.openInventory()}>
+        {i18n.t('bar.inventory')} · {inventory.count}
+      </button>
+      {#if project.onlyOwned && inventory.count === 0}
+        <p class="warnline">{i18n.t('rail.onlyOwned.none')}</p>
+      {/if}
       <label class="slider">
         <span class="top">
           <span>{i18n.t('rail.maxColors')}</span>
@@ -308,6 +323,32 @@
   .toggle input {
     width: auto;
     accent-color: var(--accent);
+  }
+
+  button.quiet {
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--edge);
+    color: var(--ink-2);
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+
+  button.quiet:hover {
+    background: var(--panel-2);
+    color: var(--ink);
+  }
+
+  .warnline {
+    margin: 9px 0 0;
+    padding: 8px 10px;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-radius: var(--radius-square);
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.5;
   }
 
   .slider {

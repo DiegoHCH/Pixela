@@ -33,6 +33,14 @@ export interface Bead {
   factoryCode?: string
   /** Cuánto se aleja ese código del color medido, en ΔE. */
   factoryDeltaE?: number
+  /** El código se sabe por el nombre, no por comparar colores. Metálicos. */
+  factoryByName?: boolean
+  /**
+   * El color sale del catálogo del fabricante y no de una cuenta medida, así
+   * que es aproximado. La interfaz lo dice; el pipeline lo usa igual, porque es
+   * lo único que hay.
+   */
+  approximate?: boolean
 }
 
 export type Palette = readonly Bead[]

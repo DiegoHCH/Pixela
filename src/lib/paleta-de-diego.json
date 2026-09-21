@@ -90,8 +90,8 @@
       "hexSinCorregir": "#867F46",
       "aviso": "metalico",
       "artkal": {
-        "code": "S117",
-        "deltaE": 9.6
+        "code": "S41",
+        "porNombre": true
       }
     },
     {
@@ -111,8 +111,8 @@
       "hexSinCorregir": "#BDCDCC",
       "aviso": "metalico",
       "artkal": {
-        "code": "S78",
-        "deltaE": 5
+        "code": "S42",
+        "porNombre": true
       }
     },
     {
@@ -237,5 +237,5 @@
     }
   ],
   "marca": "Artkal S-5mm (identificada el 21-09-2026)",
-  "avisoCodigos": "El código Artkal es el más cercano del catálogo oficial, con su ΔE. Sirve para volver a comprar, no como identidad del color: el propio fabricante declara su tabla «sólo de referencia», y estas cuentas además están medidas de una foto."
+  "avisoCodigos": "El código Artkal es el más cercano del catálogo oficial, con su ΔE. Sirve para volver a comprar, no como identidad del color: el propio fabricante declara su tabla «sólo de referencia», y estas cuentas además están medidas de una foto. Los metálicos (S41 dorado, S42 plata) van asignados por nombre y no por distancia de color, porque el fabricante no publica un RGB utilizable para ellos."
 }

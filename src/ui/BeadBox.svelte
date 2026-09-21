@@ -1,8 +1,10 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
   import { slugify } from '../lib/export'
+  import { shortfall } from '../lib/inventory'
   import { toCsv } from '../lib/shopping'
   import { downloadText } from '../state/download'
+  import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
 
   /**
@@ -21,6 +23,25 @@
   )
   const shopping = $derived(project.shopping)
   const bags = $derived(new Map(shopping?.rows.map((r) => [r.index, r.bags]) ?? []))
+
+  /**
+   * Lo que falta de verdad: lo que pide el patrón menos lo que tienes contado.
+   * Los colores marcados sin contar salen sin número, porque no saber cuánto
+   * tienes no es lo mismo que tener suficiente.
+   */
+  const falta = $derived(
+    new Map(
+      shortfall(
+        shopping?.rows.map((r) => ({ code: r.code, beads: r.beads })) ?? [],
+        inventory.all,
+        project.bagSize,
+      ).map((s) => [s.code, s]),
+    ),
+  )
+  const bolsasQueFaltan = $derived(
+    [...falta.values()].reduce((sum, s) => sum + (s.bags ?? 0), 0),
+  )
+  const sinContar = $derived([...falta.values()].filter((s) => s.missing === null).length)
 
   function exportCsv() {
     if (!shopping) return
@@ -58,6 +79,8 @@
 
   <div class="list">
     {#each counts as count (count.index)}
+      {@const bead = project.palette[count.index]}
+      {@const f = falta.get(bead.code)}
       <button
         type="button"
         class="row"
@@ -88,7 +111,11 @@
           Las bolsas van al lado de las cuentas porque es lo que de verdad se
           compra: 30 cuentas de rojo y 300 cuestan lo mismo, una bolsa.
         -->
-        <span class="bg">{i18n.t('box.bags', { n: bags.get(count.index) ?? 0 })}</span>
+        <span class="bg" class:short={f?.bags}>
+          {f?.bags
+            ? i18n.t('box.short', { n: f.bags })
+            : i18n.t('box.bags', { n: bags.get(count.index) ?? 0 })}
+        </span>
       </button>
     {/each}
   </div>
@@ -104,6 +131,17 @@
     {#if shopping && project.isolated == null}
       <p class="buy">
         {i18n.t('box.bagsTotal', { n: shopping.totalBags, size: shopping.bagSize })}
+      </p>
+      <!--
+        Con el inventario contado, lo que importa no es lo que pide el patrón
+        sino lo que te falta. Sin contar, sólo se puede avisar.
+      -->
+      <p class="buy short">
+        {bolsasQueFaltan > 0
+          ? i18n.t('box.shortTotal', { n: bolsasQueFaltan })
+          : sinContar > 0
+            ? i18n.t('box.uncountedTotal', { n: sinContar })
+            : i18n.t('box.enough')}
       </p>
       <button type="button" class="csv" onclick={exportCsv}>{i18n.t('box.csv')}</button>
     {:else}
@@ -279,6 +317,16 @@
     font-size: 10.5px;
     color: var(--ink-3);
     white-space: nowrap;
+  }
+
+  .bg.short {
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  .buy.short {
+    margin-top: -4px;
+    color: var(--ink-3);
   }
 
   .buy {

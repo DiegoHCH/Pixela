@@ -28,7 +28,16 @@ export interface PaletteEntry {
    * siendo el medido. El fabricante declara su propia tabla «sólo de
    * referencia», y estas cuentas además vienen medidas de una foto.
    */
-  artkal?: { code: string; deltaE: number }
+  artkal?: {
+    code: string
+    deltaE?: number
+    /**
+     * El código se asignó por nombre y no por distancia de color. Es el caso de
+     * los metálicos: el fabricante no publica un RGB utilizable, así que no hay
+     * distancia que medir — pero el código se sabe.
+     */
+    porNombre?: boolean
+  }
 }
 
 export interface PaletteFile {
@@ -52,7 +61,11 @@ export function makeBead(entry: PaletteEntry): Bead {
     lab: rgbToLab(rgb[0], rgb[1], rgb[2]),
     metallic: entry.aviso === 'metalico',
     ...(entry.artkal
-      ? { factoryCode: entry.artkal.code, factoryDeltaE: entry.artkal.deltaE }
+      ? {
+          factoryCode: entry.artkal.code,
+          ...(entry.artkal.deltaE !== undefined ? { factoryDeltaE: entry.artkal.deltaE } : {}),
+          ...(entry.artkal.porNombre ? { factoryByName: true } : {}),
+        }
       : {}),
   }
 }
@@ -124,6 +137,54 @@ export interface FactoryChart {
  * plata y el cobre los deja directamente sin valor.
  */
 export const ARTKAL_S: FactoryChart = artkalS as FactoryChart
+
+/**
+ * El catálogo entero como paleta, con **el color medido donde lo hay**.
+ *
+ * Es la síntesis de dos verdades incómodas. El catálogo es la única fuente de
+ * los códigos —lo que se puede pedir— pero sus valores de color no son de fiar:
+ * los dos documentos oficiales del fabricante se contradicen hasta en ΔE 8, y
+ * él mismo declara su tabla «sólo de referencia». Las cuentas medidas del cajón
+ * sí describen lo que vas a poner en la placa.
+ *
+ * Así que manda la medida cuando existe, y el catálogo rellena el resto
+ * marcado como aproximado.
+ */
+export function catalogPalette(
+  chart: FactoryChart = ARTKAL_S,
+  measured: Palette = DEFAULT_PALETTE,
+): Palette {
+  const porCodigo = new Map(
+    measured.filter((b) => b.factoryCode).map((b) => [b.factoryCode!, b]),
+  )
+
+  const out: Bead[] = []
+  for (const entry of chart.colores) {
+    const medido = porCodigo.get(entry.code)
+
+    if (medido) {
+      // El color es el medido; el código y el nombre, los de fábrica y los tuyos.
+      out.push({ ...medido, code: entry.code, factoryCode: entry.code })
+      continue
+    }
+    // Sin medida y sin color publicado —los metálicos— no hay nada que usar.
+    if (!entry.hex) continue
+
+    const rgb = hexToRgb(entry.hex)
+    out.push({
+      code: entry.code,
+      name: entry.code,
+      hex: entry.hex.toUpperCase(),
+      rgb,
+      lab: rgbToLab(rgb[0], rgb[1], rgb[2]),
+      metallic: entry.aviso === 'metalico',
+      factoryCode: entry.code,
+      // El color viene del catálogo, no de una cuenta real.
+      approximate: true,
+    })
+  }
+  return out
+}
 
 /** El código de fábrica más cercano de un catálogo, con su distancia. */
 export function nearestFactoryCode(

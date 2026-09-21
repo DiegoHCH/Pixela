@@ -14,26 +14,38 @@ import {
   suggestedSettingsFor,
   type ImageKind,
 } from '../lib/detect'
-import { DEFAULT_PALETTE } from '../lib/palette'
+import { ownedPalette } from '../lib/inventory'
+import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
 import type { SampleMode } from '../lib/sample'
 import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
 import type { Board, Palette, Pattern } from '../lib/types'
+import { inventory } from './inventory.svelte'
 import type { LoadedImage } from './load-image'
-import { readNumber, writeNumber } from './storage'
+import { readNumber, readString, writeNumber, writeString } from './storage'
 
 /** Lo que se recuerda entre sesiones: son datos tuyos, no del patrón. */
 const KEYS = {
   boards: 'pixela:boards',
   bag: 'pixela:bagSize',
+  onlyOwned: 'pixela:onlyOwned',
 } as const
+
+/**
+ * El catálogo entero, con el color medido donde lo hay. Se calcula una vez: son
+ * 175 conversiones a CIELAB que no cambian nunca.
+ */
+const CATALOG = catalogPalette()
 
 /** Se mide en placas por defecto; «Cuentas» es la salida para un tamaño concreto. */
 export type Measure = 'boards' | 'beads'
 
-/** Encuadrar y mirar el patrón son dos pantallas, no dos pestañas. */
-export type Phase = 'crop' | 'pattern'
+/**
+ * Encuadrar, mirar el patrón y repasar el inventario son pantallas, no
+ * pestañas. El inventario recuerda de dónde vino para volver ahí.
+ */
+export type Phase = 'crop' | 'pattern' | 'inventory'
 
 /** Lo más grande que ofrece el selector de forma del montaje. */
 export const MAX_BOARDS_X = 5
@@ -65,6 +77,12 @@ class Project {
   /** Qué clase de imagen es, mirada una sola vez al cargar. */
   imageKind = $state<ImageKind | null>(null)
 
+  /**
+   * Cuantizar sólo contra lo que tienes. Puesto por defecto: un patrón con
+   * colores que no están en la caja no se puede montar.
+   */
+  onlyOwned = $state(readString(KEYS.onlyOwned) !== 'no')
+
   /** El color aislado: apaga todos los demás en el lienzo. */
   isolated = $state<number | null>(null)
   /** La placa señalada en la tira, en índice de lectura. */
@@ -77,6 +95,8 @@ class Project {
    */
   conversionId = $state(0)
   fallRows = $state(0)
+
+  #phaseBefore: Phase = 'crop'
 
   /** El tamaño del patrón en cuentas, venga de placas o de un tamaño a mano. */
   get grid(): { cols: number; rows: number } {
@@ -91,13 +111,30 @@ class Project {
     return aspectOf(cols, rows)
   }
 
+  /**
+   * La paleta de trabajo: el catálogo entero, recortado a lo que tienes cuando
+   * «sólo lo que tengo» está puesto.
+   *
+   * Con el catálogo completo el patrón sale bonito y no se puede montar; con lo
+   * que tienes sale montable. Por eso el filtro viene puesto por defecto.
+   */
+  get workingPalette(): Palette {
+    return this.onlyOwned ? ownedPalette(CATALOG, inventory.all) : CATALOG
+  }
+
   #result = $derived.by(() => {
     const image = this.image
     const crop = this.crop
     if (!image || !crop) return null
+
+    const palette = this.workingPalette
+    // Sin colores marcados no hay patrón posible, y decirlo es mejor que
+    // dibujar algo con cuentas que no están en la caja.
+    if (palette.filter((b) => !b.metallic).length === 0) return null
+
     const { cols, rows } = this.grid
     const cut = cropImage(image.pixels, crop)
-    return buildPattern(cut, cols, rows, DEFAULT_PALETTE, {
+    return buildPattern(cut, cols, rows, palette, {
       mode: this.sampleMode,
       dither: this.dither,
       maxColors: this.maxColors ?? undefined,
@@ -110,7 +147,7 @@ class Project {
 
   /** La paleta con la que se cuantizó: los índices del patrón son suyos. */
   get palette(): Palette {
-    return this.#result?.palette ?? DEFAULT_PALETTE
+    return this.#result?.palette ?? this.workingPalette
   }
 
   get counts() {
@@ -204,6 +241,20 @@ class Project {
     this.conversionId++
   }
 
+  /** El inventario se abre encima y vuelve a donde estabas. */
+  openInventory(): void {
+    if (this.phase === 'inventory') return
+    this.#phaseBefore = this.phase
+    this.phase = 'inventory'
+  }
+
+  closeInventory(): void {
+    if (this.phase !== 'inventory') return
+    // Si estabas mirando un patrón y ahora no hay colores, no hay a dónde
+    // volver: el recorte sí funciona siempre.
+    this.phase = this.#phaseBefore === 'pattern' && !this.pattern ? 'crop' : this.#phaseBefore
+  }
+
   backToCrop(): void {
     this.phase = 'crop'
     this.isolated = null
@@ -228,6 +279,11 @@ class Project {
     const n = Math.max(1, Math.min(99, Math.round(count)))
     this.ownedBoards = n
     writeNumber(KEYS.boards, n)
+  }
+
+  setOnlyOwned(value: boolean): void {
+    this.onlyOwned = value
+    writeString(KEYS.onlyOwned, value ? 'si' : 'no')
   }
 
   setBagSize(size: number): void {
