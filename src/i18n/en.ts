@@ -36,6 +36,7 @@ const en: typeof es = {
   'box.colors': '{n} colours',
   'box.total': 'beads in total',
   'box.isolatedUnit': 'beads of this colour',
+  'box.factory': 'Artkal {code}, the closest in the catalogue (deltaE {delta}). For buying, not for matching.',
   'box.hint': 'Tap a compartment to isolate that colour.',
   'box.hint.again': 'Tap it again to see the whole pattern.',
 

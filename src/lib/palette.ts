@@ -6,9 +6,10 @@
  * aparte: aquí sólo llega el resultado.
  */
 
-import { hexToRgb, rgbToLab } from './color'
+import { deltaE76, hexToRgb, rgbToLab } from './color'
 import type { Bead, Palette } from './types'
 
+import artkalS from './artkal-s.json'
 import paletaDeDiego from './paleta-de-diego.json'
 
 /** Una entrada tal como viene en el JSON de paleta. */
@@ -20,12 +21,23 @@ export interface PaletteEntry {
   hexSinCorregir?: string
   /** `"metalico"` marca las cuentas que la cuantización no debe usar. */
   aviso?: string
+  /**
+   * El código de fábrica más parecido, con la distancia que hay hasta él.
+   *
+   * Es para volver a comprar, no para cuantizar: el color que manda sigue
+   * siendo el medido. El fabricante declara su propia tabla «sólo de
+   * referencia», y estas cuentas además vienen medidas de una foto.
+   */
+  artkal?: { code: string; deltaE: number }
 }
 
 export interface PaletteFile {
   fuente?: string
   referenciaDeBlanco?: string
   nota?: string
+  /** La marca, cuando se sabe. */
+  marca?: string
+  avisoCodigos?: string
   colores: PaletteEntry[]
 }
 
@@ -39,6 +51,9 @@ export function makeBead(entry: PaletteEntry): Bead {
     // LAB precalculado: la cuantización lo consulta millones de veces.
     lab: rgbToLab(rgb[0], rgb[1], rgb[2]),
     metallic: entry.aviso === 'metalico',
+    ...(entry.artkal
+      ? { factoryCode: entry.artkal.code, factoryDeltaE: entry.artkal.deltaE }
+      : {}),
   }
 }
 
@@ -90,4 +105,37 @@ export function quantizable(palette: Palette): Palette {
 
 export function beadByCode(palette: Palette, code: string): Bead | undefined {
   return palette.find((b) => b.code === code)
+}
+
+/** Un catálogo de fábrica: códigos y su color publicado, cuando lo publican. */
+export interface FactoryChart {
+  fuente?: string
+  aviso?: string
+  serie?: string
+  colores: Array<{ code: string; hex: string | null; aviso?: string }>
+}
+
+/**
+ * El catálogo oficial de Artkal serie S (5 mm), la marca del cajón.
+ *
+ * Está aquí para la lista de la compra y para quien sí tenga bolsas con
+ * códigos. No se usa para cuantizar: los valores son los que publica el
+ * fabricante, que además los declara «sólo de referencia», y el dorado, la
+ * plata y el cobre los deja directamente sin valor.
+ */
+export const ARTKAL_S: FactoryChart = artkalS as FactoryChart
+
+/** El código de fábrica más cercano de un catálogo, con su distancia. */
+export function nearestFactoryCode(
+  hex: string,
+  chart: FactoryChart = ARTKAL_S,
+): { code: string; deltaE: number } | null {
+  const lab = rgbToLab(...hexToRgb(hex))
+  let best: { code: string; deltaE: number } | null = null
+  for (const entry of chart.colores) {
+    if (!entry.hex) continue
+    const d = deltaE76(lab, rgbToLab(...hexToRgb(entry.hex)))
+    if (!best || d < best.deltaE) best = { code: entry.code, deltaE: d }
+  }
+  return best
 }

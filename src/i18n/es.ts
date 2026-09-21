@@ -36,6 +36,7 @@ export default {
   'box.colors': '{n} colores',
   'box.total': 'cuentas en total',
   'box.isolatedUnit': 'cuentas de este color',
+  'box.factory': 'Artkal {code}, el más parecido del catálogo (ΔE {delta}). Para comprar, no para comparar.',
   'box.hint': 'Pulsa un compartimento para aislar ese color.',
   'box.hint.again': 'Pulsa otra vez para ver el patrón completo.',
 

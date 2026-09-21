@@ -7,141 +7,235 @@
       "code": "C01",
       "name": "Piel claro",
       "hex": "#F9DAA7",
-      "hexSinCorregir": "#F8DDA5"
+      "hexSinCorregir": "#F8DDA5",
+      "artkal": {
+        "code": "S149",
+        "deltaE": 6.3
+      }
     },
     {
       "code": "C02",
       "name": "Rojo",
       "hex": "#FD274A",
-      "hexSinCorregir": "#FC2849"
+      "hexSinCorregir": "#FC2849",
+      "artkal": {
+        "code": "S05",
+        "deltaE": 8.5
+      }
     },
     {
       "code": "C03",
       "name": "Gris",
       "hex": "#9AA9AF",
-      "hexSinCorregir": "#99ACAD"
+      "hexSinCorregir": "#99ACAD",
+      "artkal": {
+        "code": "S79",
+        "deltaE": 7.3
+      }
     },
     {
       "code": "C04",
       "name": "Arena",
       "hex": "#EDCF85",
-      "hexSinCorregir": "#ECD284"
+      "hexSinCorregir": "#ECD284",
+      "artkal": {
+        "code": "S108",
+        "deltaE": 6.8
+      }
     },
     {
       "code": "C05",
       "name": "Ocre",
       "hex": "#D9811C",
-      "hexSinCorregir": "#D8831C"
+      "hexSinCorregir": "#D8831C",
+      "artkal": {
+        "code": "SE14",
+        "deltaE": 10.3
+      }
     },
     {
       "code": "C06",
       "name": "Frambuesa",
       "hex": "#D53057",
-      "hexSinCorregir": "#D43156"
+      "hexSinCorregir": "#D43156",
+      "artkal": {
+        "code": "S38",
+        "deltaE": 7.8
+      }
     },
     {
       "code": "C07",
       "name": "Blanco",
       "hex": "#F4F4F4",
-      "hexSinCorregir": "#F3F8F2"
+      "hexSinCorregir": "#F3F8F2",
+      "artkal": {
+        "code": "S01",
+        "deltaE": 3.8
+      }
     },
     {
       "code": "C08",
       "name": "Verde oscuro",
       "hex": "#059027",
-      "hexSinCorregir": "#059227"
+      "hexSinCorregir": "#059227",
+      "artkal": {
+        "code": "S71",
+        "deltaE": 5.1
+      }
     },
     {
       "code": "C09",
       "name": "Dorado",
       "hex": "#877D47",
       "hexSinCorregir": "#867F46",
-      "aviso": "metalico"
+      "aviso": "metalico",
+      "artkal": {
+        "code": "S117",
+        "deltaE": 9.6
+      }
     },
     {
       "code": "C10",
       "name": "Gris medio",
       "hex": "#879194",
-      "hexSinCorregir": "#869393"
+      "hexSinCorregir": "#869393",
+      "artkal": {
+        "code": "S07",
+        "deltaE": 4.8
+      }
     },
     {
       "code": "C11",
       "name": "Plata",
       "hex": "#BECACE",
       "hexSinCorregir": "#BDCDCC",
-      "aviso": "metalico"
+      "aviso": "metalico",
+      "artkal": {
+        "code": "S78",
+        "deltaE": 5
+      }
     },
     {
       "code": "C12",
       "name": "Blanco roto",
       "hex": "#DFE9E8",
-      "hexSinCorregir": "#DEEDE6"
+      "hexSinCorregir": "#DEEDE6",
+      "artkal": {
+        "code": "S77",
+        "deltaE": 6.2
+      }
     },
     {
       "code": "C13",
       "name": "Morado",
       "hex": "#AD21CF",
-      "hexSinCorregir": "#AC21CD"
+      "hexSinCorregir": "#AC21CD",
+      "artkal": {
+        "code": "SE11",
+        "deltaE": 16.9
+      }
     },
     {
       "code": "C14",
       "name": "Rosa claro",
       "hex": "#FFA7E2",
-      "hexSinCorregir": "#FEA9E0"
+      "hexSinCorregir": "#FEA9E0",
+      "artkal": {
+        "code": "S28",
+        "deltaE": 6.4
+      }
     },
     {
       "code": "C15",
       "name": "Negro",
       "hex": "#19191B",
-      "hexSinCorregir": "#19191B"
+      "hexSinCorregir": "#19191B",
+      "artkal": {
+        "code": "S158",
+        "deltaE": 5.1
+      }
     },
     {
       "code": "C16",
       "name": "Celeste",
       "hex": "#8CDEE9",
-      "hexSinCorregir": "#8BE1E7"
+      "hexSinCorregir": "#8BE1E7",
+      "artkal": {
+        "code": "S37",
+        "deltaE": 6.4
+      }
     },
     {
       "code": "C17",
       "name": "Lima",
       "hex": "#D5D504",
-      "hexSinCorregir": "#D4D804"
+      "hexSinCorregir": "#D4D804",
+      "artkal": {
+        "code": "S70",
+        "deltaE": 13.4
+      }
     },
     {
       "code": "C18",
       "name": "Fucsia",
       "hex": "#FE3AA6",
-      "hexSinCorregir": "#FD3BA4"
+      "hexSinCorregir": "#FD3BA4",
+      "artkal": {
+        "code": "S88",
+        "deltaE": 11.9
+      }
     },
     {
       "code": "C19",
       "name": "Azul cielo",
       "hex": "#02ADFF",
-      "hexSinCorregir": "#02B0FD"
+      "hexSinCorregir": "#02B0FD",
+      "artkal": {
+        "code": "S54",
+        "deltaE": 11.4
+      }
     },
     {
       "code": "C20",
       "name": "Amarillo",
       "hex": "#FCE401",
-      "hexSinCorregir": "#FBE701"
+      "hexSinCorregir": "#FBE701",
+      "artkal": {
+        "code": "S14",
+        "deltaE": 8.9
+      }
     },
     {
       "code": "C21",
       "name": "Naranja",
       "hex": "#FFA14B",
-      "hexSinCorregir": "#FEA34A"
+      "hexSinCorregir": "#FEA34A",
+      "artkal": {
+        "code": "SE12",
+        "deltaE": 9.4
+      }
     },
     {
       "code": "C22",
       "name": "Azul",
       "hex": "#0E3EC0",
-      "hexSinCorregir": "#0E3FBE"
+      "hexSinCorregir": "#0E3FBE",
+      "artkal": {
+        "code": "S143",
+        "deltaE": 12.4
+      }
     },
     {
       "code": "C23",
       "name": "Verde",
       "hex": "#0FE102",
-      "hexSinCorregir": "#0FE402"
+      "hexSinCorregir": "#0FE402",
+      "artkal": {
+        "code": "S123",
+        "deltaE": 22.5
+      }
     }
-  ]
+  ],
+  "marca": "Artkal S-5mm (identificada el 21-09-2026)",
+  "avisoCodigos": "El código Artkal es el más cercano del catálogo oficial, con su ΔE. Sirve para volver a comprar, no como identidad del color: el propio fabricante declara su tabla «sólo de referencia», y estas cuentas además están medidas de una foto."
 }

@@ -57,6 +57,21 @@
         <span class="bd" style:background={project.palette[count.index].hex}></span>
         <span class="cd">{project.palette[count.index].code}</span>
         <span class="nm">{project.palette[count.index].name}</span>
+        {#if project.palette[count.index].factoryCode}
+          <!--
+            El código de fábrica va con «≈» siempre, y no por prudencia
+            decorativa: el catálogo del fabricante se declara «sólo de
+            referencia», y estas cuentas están medidas de una foto. Sirve para
+            volver a comprar, no como identidad del color.
+          -->
+          <span
+            class="fc"
+            title={i18n.t('box.factory', {
+              code: project.palette[count.index].factoryCode ?? '',
+              delta: (project.palette[count.index].factoryDeltaE ?? 0).toFixed(1),
+            })}>≈{project.palette[count.index].factoryCode}</span
+          >
+        {/if}
         <span class="ct">{count.count.toLocaleString()}</span>
       </button>
     {/each}
@@ -153,7 +168,7 @@
   .row {
     width: 100%;
     display: grid;
-    grid-template-columns: 16px 34px 1fr auto;
+    grid-template-columns: 16px 34px 1fr auto auto;
     align-items: center;
     gap: 8px;
     padding: 5px 15px;
@@ -192,6 +207,13 @@
     font-size: 12.5px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .fc {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
     white-space: nowrap;
   }
 

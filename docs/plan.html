@@ -381,6 +381,15 @@
 <h4>Lo que se conserva</h4>
 <p>Siguen viniendo <strong>paletas de fábrica cargadas</strong> — Hama, Perler, Artkal, Nabbi — como punto de partida para quien sí tenga las bolsas con códigos, y el bloque JSON editable sigue existiendo como salida de emergencia. Pero dejan de ser el camino principal, y <strong>sus valores se siguen declarando aproximados en la interfaz</strong>, porque siguen sin estar verificados.</p>
 
+<div class="note">
+  <div class="label">El catálogo de la marca, ya cargado — y por qué sigue diciendo «aproximado»</div>
+  <p>Identificada la marca (ver pregunta 3), se cargó el <b>catálogo oficial de Artkal S de 5 mm</b>: 176 códigos con su RGB publicado, sacados del PDF del fabricante y no transcritos a ojo. Cada color del cajón lleva ahora <b>el código más cercano y su ΔE</b>, para volver a comprar.</p>
+  <p>Lo que <em>no</em> hace es sustituir a la medida. Dos motivos, y los dos medidos:</p>
+  <p>Primero, el propio fabricante <b>declara su tabla «sólo de referencia»</b> y advierte de que no sustituye a ver las cuentas reales. Segundo, el emparejamiento lo demuestra: de 23 colores, <b>sólo 2 caen por debajo de ΔE 5</b> —el umbral de «el mismo color a ojo»— y <b>4 pasan de 12</b>, con el verde llegando a 22,5. Eso es exactamente lo que esta sección predecía: las cuentas reales se decoloran, varían de lote y casi nunca coinciden con el color publicado.</p>
+  <p>De ahí la regla que queda en la interfaz: <strong>el código va con un «≈» delante, siempre</strong>. Sirve para comprar, no para comparar.</p>
+  <p>Detalle que confirma otra decisión: el catálogo deja <b>el dorado, la plata y el cobre sin valor RGB</b>. El fabricante tampoco sabe darles un número, que es el mismo motivo por el que aquí están excluidos de la cuantización.</p>
+</div>
+
 <h2>7 · Sistema de diseño</h2>
 
 <p>Resuelto aparte y completo, en <strong>Pixela — Sistema de diseño</strong> (<code>pixela-sistema-diseno.html</code>, misma carpeta): fundamentos, biblioteca de componentes con sus estados, <strong>doce pantallas de escritorio y ocho de móvil</strong>, y las reglas de adaptación entre ambos. Todo en los dos temas, con conmutador. Las pantallas no son dibujos: ejecutan la cuantización real, así que las cuentas que se ven ahí salieron del pipeline de la sección 3.</p>
@@ -490,8 +499,9 @@
 </div>
 
 <div class="q">
-  <div class="ask">3. Compradas en «Señor Hama» — marca sin confirmar</div>
-  <p class="why">No pude localizar esa tienda. Y hay un detalle que importa: en el mundo hispanohablante <b>«hama beads» se usa como nombre genérico</b>, igual que «kleenex», y buena parte de las tiendas que se llaman así venden <b>Perler o Artkal</b>, no Hama. O sea que el nombre de la tienda no dice la marca. Queda pendiente mirar la bolsa.</p>
+  <div class="ask">3. Compradas en «Señor Hama» — <b>son Artkal, serie S de 5 mm</b></div>
+  <p class="why">No pude localizar esa tienda. Y hay un detalle que importaba: en el mundo hispanohablante <b>«hama beads» se usa como nombre genérico</b>, igual que «kleenex», y buena parte de las tiendas que se llaman así venden <b>Perler o Artkal</b>, no Hama. O sea que el nombre de la tienda no decía la marca.</p>
+  <p class="why" style="margin-top:8px">Confirmado el 21 de septiembre de 2026: son <b>Artkal</b>. Y la serie se deduce de dos datos que ya teníamos: las placas son de 29 × 29 pines, o sea 5 mm, lo que descarta las series C y M —de 2,6 mm—; y las cuentas son <b>duras al apretarlas</b>, lo que descarta la R, que es blanda. Queda la <b>serie S</b>, de 225 colores.</p>
 </div>
 
 <div class="q">
@@ -545,8 +555,9 @@
 </ul>
 
 <div class="q">
-  <div class="ask">B. ¿Qué marca son tus cuentas? — <b>resuelta</b></div>
-  <p class="why">Ninguna: un cajón con cuentas sueltas de varios colores, sin bolsas ni códigos. Lejos de ser un problema, <b>disuelve el riesgo que esta sección 6 llevaba abierta desde el principio</b>: si la paleta se captura fotografiando tus cuentas, deja de importar que yo no tenga los valores oficiales de Hama verificados. Ver la sección 6, reescrita entera.</p>
+  <div class="ask">B. ¿Qué marca son tus cuentas? — <b>Artkal S-5mm</b></div>
+  <p class="why">Primero parecía que ninguna: un cajón con cuentas sueltas, sin bolsas ni códigos. Eso ya <b>disolvió el riesgo que la sección 6 llevaba abierto</b>, porque si la paleta se captura fotografiando tus cuentas, deja de importar no tener valores oficiales verificados.</p>
+  <p class="why" style="margin-top:8px">Después apareció la marca, y <b>no cambia la decisión: la amplía</b>. Los 23 colores medidos siguen siendo los que mandan en la cuantización. Lo que se gana es que cada uno puede decir <b>con qué código se vuelve a comprar</b>, que es justo lo que la sección 6 daba por perdido.</p>
 </div>
 
 <h2>10 · Dónde vivirá</h2>
