@@ -17,6 +17,7 @@ import {
 import { accentSourceOf } from '../lib/accent'
 import { isNeutral, type Adjustments } from '../lib/adjust'
 import { fidelity, isFar, type Fidelity } from '../lib/fidelity'
+import { MIDI_PITCH_MM, physicalSize, type PhysicalSize } from '../lib/measure'
 import { ownedPalette } from '../lib/inventory'
 import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
@@ -32,6 +33,7 @@ import { readNumber, readString, writeNumber, writeString } from './storage'
 const KEYS = {
   boards: 'pixela:boards',
   bag: 'pixela:bagSize',
+  pitch: 'pixela:pitchMm',
   onlyOwned: 'pixela:onlyOwned',
 } as const
 
@@ -71,6 +73,11 @@ class Project {
   ownedBoards = $state(readNumber(KEYS.boards, 2, { min: 1, max: 99 }))
   /** Cuentas por bolsa: 320 en la tienda del cajón, 1.000 las de fábrica. */
   bagSize = $state(readNumber(KEYS.bag, DEFAULT_BAG_SIZE, { min: 1, max: 10000 }))
+  /**
+   * Lo que mide una cuenta de lado, en milímetros. Midi son 5; si mides tu
+   * placa de borde a borde y no cuadra, aquí se corrige.
+   */
+  pitchMm = $state(readNumber(KEYS.pitch, MIDI_PITCH_MM, { min: 1, max: 20 }))
   crop = $state<Rect | null>(null)
 
   sampleMode = $state<SampleMode>('average')
@@ -355,6 +362,18 @@ class Project {
   setOnlyOwned(value: boolean): void {
     this.onlyOwned = value
     writeString(KEYS.onlyOwned, value ? 'si' : 'no')
+  }
+
+  /** El tamaño de la pieza terminada. Lo primero que se pregunta al enmarcar. */
+  get size(): PhysicalSize {
+    const { cols, rows } = this.grid
+    return physicalSize(cols, rows, this.pitchMm)
+  }
+
+  setPitch(mm: number): void {
+    const value = Math.max(1, Math.min(20, Math.round(mm * 100) / 100))
+    this.pitchMm = value
+    writeNumber(KEYS.pitch, value)
   }
 
   setBagSize(size: number): void {

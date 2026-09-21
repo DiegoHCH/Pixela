@@ -1,5 +1,6 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
+  import { formatSize } from '../lib/measure'
   import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
   import BoardPicker from './BoardPicker.svelte'
@@ -264,6 +265,7 @@
     <dl>
       <div><dt>{i18n.t('rail.cost.beads')}</dt><dd>{project.total.toLocaleString()}</dd></div>
       <div><dt>{i18n.t('rail.cost.colors')}</dt><dd>{colors}</dd></div>
+      <div><dt>{i18n.t('rail.cost.size')}</dt><dd class="sz">{formatSize(project.size)}</dd></div>
       {#if project.shopping}
         <div>
           <dt>{i18n.t('rail.cost.bags')}</dt>
@@ -289,6 +291,17 @@
           max="99"
           value={project.ownedBoards}
           onchange={(e) => project.setOwnedBoards(e.currentTarget.valueAsNumber || 1)}
+        />
+      </label>
+      <label>
+        <span>{i18n.t('rail.yours.pitch')}</span>
+        <input
+          type="number"
+          min="1"
+          max="20"
+          step="0.1"
+          value={project.pitchMm}
+          onchange={(e) => project.setPitch(e.currentTarget.valueAsNumber || 5)}
         />
       </label>
       <label>
@@ -530,6 +543,10 @@
     font-family: var(--font-display);
     font-size: 16px;
     color: var(--ink);
+  }
+
+  dd.sz {
+    font-size: 14px;
   }
 
   @media (max-width: 900px) {
