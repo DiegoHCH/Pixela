@@ -33,6 +33,7 @@
   /** El motivo exacto cuando un proyecto no se puede abrir. */
   let projectError = $state<string | null>(null)
   let exporting = $state(false)
+  let saving = $state(false)
   let dragDepth = 0
 
   /**
@@ -64,14 +65,17 @@
   }
 
   /** Guarda la imagen de trabajo y las decisiones, no el patrón ya calculado. */
-  function saveProject() {
-    if (!project.image) return
+  async function saveProject() {
+    if (!project.image || saving) return
     failure = null
+    saving = true
     try {
-      saveProjectFile(buildProjectFile(project.image, project.name, project.settings))
+      await saveProjectFile(buildProjectFile(project.image, project.name, project.settings))
     } catch {
       projectError = null
       failure = 'project'
+    } finally {
+      saving = false
     }
   }
 
@@ -209,7 +213,7 @@
       {/if}
 
       {#if project.image && project.phase !== 'inventory'}
-        <button type="button" class="ghost" onclick={saveProject}>
+        <button type="button" class="ghost" onclick={saveProject} disabled={saving}>
           {i18n.t('bar.save')}
         </button>
       {/if}

@@ -9,7 +9,7 @@
 import { EXPORT_CELL_SIZE, exportFileName } from '../lib/export'
 import { drawPattern, type RenderMode } from '../lib/render'
 import type { Board, Palette, Pattern } from '../lib/types'
-import { downloadBlob } from './download'
+import { saveBlob, type SaveResult } from './download'
 
 export interface ExportOptions {
   /** Nombre del archivo de origen, para nombrar la salida. */
@@ -36,7 +36,7 @@ export async function exportPatternPng(
   pattern: Pattern,
   palette: Palette,
   options: ExportOptions,
-): Promise<string> {
+): Promise<{ name: string; result: SaveResult }> {
   const cellSize = options.cellSize ?? EXPORT_CELL_SIZE
   const canvas = document.createElement('canvas')
   canvas.width = pattern.cols * cellSize
@@ -62,8 +62,7 @@ export async function exportPatternPng(
     rows: pattern.rows,
     board: options.boardNumber,
   })
-  downloadBlob(blob, name)
-  return name
+  return { name, result: await saveBlob(blob, name, 'png') }
 }
 
 function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {

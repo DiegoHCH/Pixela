@@ -3,7 +3,7 @@
   import { slugify } from '../lib/export'
   import { shortfall } from '../lib/inventory'
   import { toCsv } from '../lib/shopping'
-  import { downloadText } from '../state/download'
+  import { saveText } from '../state/download'
   import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
 
@@ -43,10 +43,10 @@
   )
   const sinContar = $derived([...falta.values()].filter((s) => s.missing === null).length)
 
-  function exportCsv() {
+  async function exportCsv() {
     if (!shopping) return
     const base = slugify(project.name) || 'pixela'
-    downloadText(toCsv(shopping), `${base}-lista.csv`, 'text/csv')
+    await saveText(toCsv(shopping), `${base}-lista.csv`, 'csv')
   }
 </script>
 
