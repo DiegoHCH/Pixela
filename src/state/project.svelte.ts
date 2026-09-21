@@ -21,6 +21,13 @@ import type { SampleMode } from '../lib/sample'
 import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
 import type { Board, Palette, Pattern } from '../lib/types'
 import type { LoadedImage } from './load-image'
+import { readNumber, writeNumber } from './storage'
+
+/** Lo que se recuerda entre sesiones: son datos tuyos, no del patrón. */
+const KEYS = {
+  boards: 'pixela:boards',
+  bag: 'pixela:bagSize',
+} as const
 
 /** Se mide en placas por defecto; «Cuentas» es la salida para un tamaño concreto. */
 export type Measure = 'boards' | 'beads'
@@ -42,10 +49,13 @@ class Project {
   beadCols = $state(58)
   beadRows = $state(29)
   board = $state<Board>(MIDI_SQUARE)
-  /** Cuántas placas tienes. Es un dato tuyo, no del patrón, y se pregunta una vez. */
-  ownedBoards = $state(2)
+  /**
+   * Cuántas placas tienes. Es un dato tuyo, no del patrón: se pregunta una vez
+   * y se recuerda, como el tema. Se cambia cuando compres más.
+   */
+  ownedBoards = $state(readNumber(KEYS.boards, 2, { min: 1, max: 99 }))
   /** Cuentas por bolsa: 320 en la tienda del cajón, 1.000 las de fábrica. */
-  bagSize = $state(DEFAULT_BAG_SIZE)
+  bagSize = $state(readNumber(KEYS.bag, DEFAULT_BAG_SIZE, { min: 1, max: 10000 }))
   crop = $state<Rect | null>(null)
 
   sampleMode = $state<SampleMode>('average')
@@ -211,6 +221,19 @@ class Project {
 
   selectBoard(index: number | null): void {
     this.selectedBoard = this.selectedBoard === index ? null : index
+  }
+
+  /** Cuántas placas tienes, recordado entre sesiones. */
+  setOwnedBoards(count: number): void {
+    const n = Math.max(1, Math.min(99, Math.round(count)))
+    this.ownedBoards = n
+    writeNumber(KEYS.boards, n)
+  }
+
+  setBagSize(size: number): void {
+    const n = Math.max(1, Math.min(10000, Math.round(size)))
+    this.bagSize = n
+    writeNumber(KEYS.bag, n)
   }
 
   /** Elegir la forma del montaje reencuadra: la proporción ha cambiado. */

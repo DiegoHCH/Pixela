@@ -197,6 +197,41 @@ describe('al cambiar de proporción con el encuadre hecho', () => {
   })
 })
 
+describe('las placas que tienes', () => {
+  test('se cambian cuando quieras y acotan a lo posible', () => {
+    project.setOwnedBoards(6)
+    expect(project.ownedBoards).toBe(6)
+    project.setOwnedBoards(0)
+    expect(project.ownedBoards).toBe(1)
+    project.setOwnedBoards(500)
+    expect(project.ownedBoards).toBe(99)
+    project.setOwnedBoards(2)
+  })
+
+  test('cambiarlas recalcula las tandas al momento', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(3, 2)
+    expect(project.batches).toHaveLength(3)
+
+    project.setOwnedBoards(6)
+    expect(project.batches).toHaveLength(1)
+    expect(project.fitsInOneGo).toBe(true)
+
+    project.setOwnedBoards(1)
+    expect(project.batches).toHaveLength(6)
+    project.setOwnedBoards(2)
+  })
+
+  test('el tamaño de bolsa también, y la lista lo sigue', () => {
+    project.open(fakeImage(1200, 800))
+    const con320 = project.shopping!.totalBags
+    project.setBagSize(1000)
+    expect(project.bagSize).toBe(1000)
+    expect(project.shopping!.totalBags).toBeLessThan(con320)
+    project.setBagSize(320)
+  })
+})
+
 describe('al cerrar', () => {
   test('no queda nada del proyecto anterior', () => {
     project.open(fakeImage(600, 600))

@@ -192,8 +192,7 @@
           min="1"
           max="99"
           value={project.ownedBoards}
-          onchange={(e) =>
-            (project.ownedBoards = Math.max(1, Math.round(e.currentTarget.valueAsNumber || 1)))}
+          onchange={(e) => project.setOwnedBoards(e.currentTarget.valueAsNumber || 1)}
         />
       </label>
       <label>
@@ -204,8 +203,7 @@
           max="10000"
           step="10"
           value={project.bagSize}
-          onchange={(e) =>
-            (project.bagSize = Math.max(1, Math.round(e.currentTarget.valueAsNumber || 1)))}
+          onchange={(e) => project.setBagSize(e.currentTarget.valueAsNumber || 1)}
         />
       </label>
     </div>
