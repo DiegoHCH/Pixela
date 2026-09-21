@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LOCALES, i18n, type MessageKey } from '../i18n/index.svelte'
-  import { accentOf } from '../lib/accent'
+  import { accentFromHex } from '../lib/accent'
   import { exportPatternPng } from '../state/export-png'
   import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
   import { project } from '../state/project.svelte'
@@ -92,11 +92,14 @@
   /**
    * La app no tiene color de marca: el acento sale del patrón abierto. Sin
    * patrón vuelve al de reserva.
+   *
+   * Lee el color ya fijado y no el patrón: así no parpadea mientras arrastras
+   * un deslizante. La banda de luminosidad sí depende del tema, por eso el
+   * efecto sigue dependiendo de él.
    */
   $effect(() => {
-    const pattern = project.pattern
     const current = theme.current
-    applyAccent(pattern ? accentOf(pattern, project.palette, current) : null, current)
+    applyAccent(accentFromHex(project.accentSource, current), current)
   })
 </script>
 

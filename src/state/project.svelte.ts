@@ -14,6 +14,7 @@ import {
   suggestedSettingsFor,
   type ImageKind,
 } from '../lib/detect'
+import { accentSourceOf } from '../lib/accent'
 import { isNeutral, type Adjustments } from '../lib/adjust'
 import { fidelity, isFar, type Fidelity } from '../lib/fidelity'
 import { ownedPalette } from '../lib/inventory'
@@ -101,6 +102,15 @@ class Project {
    * colores que no están en la caja no se puede montar.
    */
   onlyOwned = $state(readString(KEYS.onlyOwned) !== 'no')
+
+  /**
+   * El color del que sale el acento de la interfaz.
+   *
+   * Se fija al abrir una imagen y al convertir, y no se toca mientras afinas:
+   * recalcularlo en cada tic de un deslizante hacía parpadear los botones
+   * mientras los usabas. El acento es del patrón, no del último fotograma.
+   */
+  accentSource = $state<string | null>(null)
 
   /** El color aislado: apaga todos los demás en el lienzo. */
   isolated = $state<number | null>(null)
@@ -269,6 +279,9 @@ class Project {
     const suggested = suggestedSettingsFor(stats, cols, rows)
     this.sampleMode = suggested.mode
     this.dither = suggested.dither
+    // Con la imagen recién abierta ya hay patrón de previsualización: de ahí
+    // sale el acento, y ahí se queda hasta que conviertas.
+    this.refreshAccent()
   }
 
   close(): void {
@@ -278,12 +291,20 @@ class Project {
     this.isolated = null
     this.selectedBoard = null
     this.imageKind = null
+    this.accentSource = null
+  }
+
+  /** Vuelve a mirar de qué color es el patrón. Sólo en momentos concretos. */
+  refreshAccent(): void {
+    const pattern = this.pattern
+    this.accentSource = pattern ? accentSourceOf(pattern, this.palette) : null
   }
 
   /** Del recorte al patrón. Aquí es donde caen las cuentas. */
   convert(): void {
     const pattern = this.pattern
     if (!pattern) return
+    this.refreshAccent()
     this.phase = 'pattern'
     this.isolated = null
     this.selectedBoard = null
