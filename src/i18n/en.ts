@@ -9,6 +9,9 @@ const en: typeof es = {
   'bar.convert': 'Convert to pattern',
   'bar.back': 'Back to the crop',
   'bar.noFile': 'No pattern',
+  'bar.export': 'Export PNG',
+  'bar.exportBoard': 'Export board {n}',
+  'bar.exporting': 'Exporting…',
 
   'empty.title': 'Drag an image here',
   'empty.body': 'PNG, JPG or GIF. It is converted inside your browser: the image never leaves this machine.',
@@ -70,6 +73,8 @@ const en: typeof es = {
   'error.type.body': 'Try a PNG, a JPG or a GIF.',
   'error.decode.title': 'The image could not be read',
   'error.decode.body': 'It may be damaged, or in a format this browser does not open.',
+  'error.export.title': 'The export failed',
+  'error.export.body': 'The pattern is untouched; give it another go.',
   'error.dismiss': 'Got it',
 
   'theme.day': 'Day',

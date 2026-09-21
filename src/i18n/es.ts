@@ -8,6 +8,9 @@ export default {
   'bar.convert': 'Convertir a patrón',
   'bar.back': 'Volver al recorte',
   'bar.noFile': 'Sin patrón',
+  'bar.export': 'Exportar PNG',
+  'bar.exportBoard': 'Exportar placa {n}',
+  'bar.exporting': 'Exportando…',
 
   'empty.title': 'Arrastra una imagen aquí',
   'empty.body':
@@ -70,6 +73,8 @@ export default {
   'error.type.body': 'Prueba con un PNG, un JPG o un GIF.',
   'error.decode.title': 'No se pudo leer la imagen',
   'error.decode.body': 'Puede estar dañada o en un formato que este navegador no abre.',
+  'error.export.title': 'No se pudo exportar',
+  'error.export.body': 'El patrón sigue intacto; vuelve a intentarlo.',
   'error.dismiss': 'Entendido',
 
   'theme.day': 'Día',
