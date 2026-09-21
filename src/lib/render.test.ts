@@ -2,7 +2,16 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { DEFAULT_PALETTE, quantizable } from './palette'
 import { MIDI_SQUARE } from './boards'
-import { drawEmptyBoard, drawPattern, fitCellSize, patternPixelSize, symbolFor } from './render'
+import {
+  MIN_CELL_FOR_DETAIL,
+  MIN_CELL_FOR_SYMBOL,
+  drawEmptyBoard,
+  drawPattern,
+  fitCellSize,
+  minCellFor,
+  patternPixelSize,
+  symbolFor,
+} from './render'
 import type { Pattern } from './types'
 import { SIN_CUENTA } from './types'
 
@@ -176,6 +185,13 @@ describe('drawPattern', () => {
     expect(fake.texts.map((t) => t.text)).toEqual([symbolFor(0), symbolFor(3)])
   })
 
+  it('con la celda diminuta no hay letra que dibujar', () => {
+    // Y por eso `minCellFor` existe: el modo pedía una celda que la mesa no le
+    // daba, y se quedaba en cuadrados planos sin decir nada.
+    drawPattern(real, tiny(), { palette: PAL, cellSize: 5, mode: 'symbol' })
+    expect(fake.texts).toHaveLength(0)
+  })
+
   it('la impresión va en blanco, con símbolos y sin agujeros', () => {
     drawPattern(real, tiny(), { palette: PAL, cellSize: 20, mode: 'print' })
     expect(fake.fills[0].style).toBe('#FFFFFF')
@@ -197,6 +213,23 @@ describe('drawEmptyBoard', () => {
     expect(fake.fills[0].rect).toEqual([0, 0, 27, 18])
     expect(fake.count('arc')).toBe(6)
     expect(fake.count('roundRect')).toBe(0)
+  })
+})
+
+describe('minCellFor', () => {
+  it('el color se conforma con cualquier tamaño', () => {
+    expect(minCellFor('color')).toBe(1)
+  })
+
+  it('los símbolos piden sitio, y es más de lo que dibuja una cuenta', () => {
+    expect(minCellFor('symbol')).toBe(MIN_CELL_FOR_SYMBOL)
+    expect(MIN_CELL_FOR_SYMBOL).toBeGreaterThan(MIN_CELL_FOR_DETAIL)
+  })
+
+  it('a ese tamaño sí se dibujan', () => {
+    const { fake, real } = ctx()
+    drawPattern(real, tiny(), { palette: PAL, cellSize: minCellFor('symbol'), mode: 'symbol' })
+    expect(fake.texts).toHaveLength(2)
   })
 })
 
