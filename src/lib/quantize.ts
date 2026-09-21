@@ -6,7 +6,7 @@
  * que viajar al resto del pipeline: contar, dibujar y la lista de la compra.
  */
 
-import { labDistanceSq, rgbToLab } from './color'
+import { clamp8, labDistanceSq, rgbToLab } from './color'
 import type { CellGrid, Palette, Pattern } from './types'
 import { SIN_CUENTA } from './types'
 
@@ -62,9 +62,22 @@ export function quantize(
         continue
       }
 
-      const r = buf[p]
-      const g = buf[p + 1]
-      const b = buf[p + 2]
+      // Acotado al canal antes de buscar la cuenta.
+      //
+      // El difuminado suma el error de las celdas anteriores y ese valor se
+      // desboca: medido sobre colores planos llega a 9.667, o sea 38 veces
+      // fuera del canal. `rgbToLab` sólo significa algo entre 0 y 255 —más
+      // allá, la curva de sRGB se extrapola y la distancia deja de
+      // corresponder a lo que se ve—, así que se acota, y el error se mide
+      // desde el valor acotado para no arrastrar una parte que no existe.
+      //
+      // Es correctitud, no un remedio: cambia qué cuenta se elige en casi
+      // cualquier color plano, pero no evita el «confeti» de difuminar un
+      // dibujo plano. Eso se arregla no difuminándolo, y de eso se encarga
+      // `detect.ts`.
+      const r = clamp8(buf[p])
+      const g = clamp8(buf[p + 1])
+      const b = clamp8(buf[p + 2])
       const idx = nearestBead(r, g, b, palette)
       cells[i] = idx
 

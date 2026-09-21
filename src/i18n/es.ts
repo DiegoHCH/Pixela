@@ -59,6 +59,12 @@ export default {
   'rail.cost.colors': 'Colores',
   'rail.origin': 'Origen',
   'rail.color': 'Color',
+  'rail.image': 'Imagen',
+  'rail.mode.average': 'Promedio',
+  'rail.mode.point': 'Directo',
+  'rail.detail.title': 'A este tamaño se pierde el dibujo.',
+  'rail.detail.body':
+    'Es una ilustración de zonas planas, y en {cells} cuentas los rasgos no se leen. Con más placas se reconoce.',
   'rail.dither': 'Difuminado',
   'rail.maxColors': 'Máximo de colores',
   'rail.maxColors.none': 'sin tope',

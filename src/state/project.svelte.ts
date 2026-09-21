@@ -7,6 +7,13 @@
 
 import { MIDI_SQUARE, boardSlice, layoutFor, patternSize, planBatches } from '../lib/boards'
 import { aspectOf, centeredCrop, clampToImage, cropImage, type Rect } from '../lib/crop'
+import {
+  imageStats,
+  kindFromStats,
+  losesDetailFor,
+  suggestedSettingsFor,
+  type ImageKind,
+} from '../lib/detect'
 import { DEFAULT_PALETTE } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
@@ -41,6 +48,9 @@ class Project {
   sampleMode = $state<SampleMode>('average')
   dither = $state(true)
   maxColors = $state<number | null>(null)
+
+  /** Qué clase de imagen es, mirada una sola vez al cargar. */
+  imageKind = $state<ImageKind | null>(null)
 
   /** El color aislado: apaga todos los demás en el lienzo. */
   isolated = $state<number | null>(null)
@@ -116,6 +126,13 @@ class Project {
     return this.batches.length === 1
   }
 
+  /** Si a este tamaño el dibujo se va a perder, para decirlo antes de montar. */
+  get losesDetail(): boolean {
+    if (!this.imageKind) return false
+    const { cols, rows } = this.grid
+    return losesDetailFor(this.imageKind, cols, rows)
+  }
+
   /** El recorte de la placa señalada, para verla sola y con sus huecos. */
   get selectedBoardPattern(): Pattern | null {
     const pattern = this.pattern
@@ -125,12 +142,27 @@ class Project {
     return boardSlice(pattern, index % layout.cols, Math.floor(index / layout.cols), this.board)
   }
 
+  /**
+   * Abre una imagen y **propone** los ajustes según lo que es.
+   *
+   * Se proponen y no se imponen: quedan visibles en la columna y se cambian en
+   * un gesto. Pero proponerlos es lo que separa un patrón de un confeti — el
+   * mismo difuminado que salva una foto destroza un dibujo plano.
+   */
   open(image: LoadedImage): void {
     this.image = image
     this.phase = 'crop'
     this.isolated = null
     this.selectedBoard = null
+    this.maxColors = null
     this.refitCrop()
+
+    const stats = imageStats(image.pixels)
+    this.imageKind = kindFromStats(stats)
+    const { cols, rows } = this.grid
+    const suggested = suggestedSettingsFor(stats, cols, rows)
+    this.sampleMode = suggested.mode
+    this.dither = suggested.dither
   }
 
   close(): void {
@@ -139,6 +171,7 @@ class Project {
     this.phase = 'crop'
     this.isolated = null
     this.selectedBoard = null
+    this.imageKind = null
   }
 
   /** Del recorte al patrón. Aquí es donde caen las cuentas. */
