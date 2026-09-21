@@ -88,6 +88,7 @@
 
 <style>
   .strip {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 14px;
