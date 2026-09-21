@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { drawPattern, fitCellSize } from '../lib/render'
+  import { drawPattern, fitCellSize, minCellFor } from '../lib/render'
   import { project } from '../state/project.svelte'
   import { theme } from '../state/theme.svelte'
 
@@ -55,7 +55,9 @@
 
     if (!el || !pattern || boxWidth <= 0 || boxHeight <= 0) return
 
-    const cellSize = fitCellSize(pattern, boxWidth, boxHeight)
+    // En símbolos la celda no baja de lo legible aunque el patrón no quepa: se
+    // desplaza. Un modo que no se ve no es un modo.
+    const cellSize = Math.max(minCellFor(mode), fitCellSize(pattern, boxWidth, boxHeight))
     const width = pattern.cols * cellSize
     const height = pattern.rows * cellSize
     const dpr = Math.min(2, window.devicePixelRatio || 1)

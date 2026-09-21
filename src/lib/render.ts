@@ -16,6 +16,27 @@ import { SIN_CUENTA } from './types'
 /** Sin I ni O: se confunden con 1 y 0 en la hoja impresa. */
 export const SYMBOLS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 
+/**
+ * Por debajo de esto una cuenta se pinta como un cuadrado plano: el agujero
+ * sería ruido y la letra, ilegible.
+ */
+export const MIN_CELL_FOR_DETAIL = 7
+
+/**
+ * Lo que mide una celda para que su letra se lea.
+ *
+ * El modo símbolos existe para montar mirando letras en vez de colores, así que
+ * una celda demasiado pequeña para dibujarlas no es «modo símbolos en pequeño»:
+ * es el modo sin hacer nada. Un patrón de 87 × 116 en la mesa cae a 6 px por
+ * celda, y ahí las letras no salían — el conmutador parecía roto.
+ */
+export const MIN_CELL_FOR_SYMBOL = 16
+
+/** El tamaño de celda mínimo que un modo necesita para decir algo. */
+export function minCellFor(mode: RenderMode): number {
+  return mode === 'color' ? 1 : MIN_CELL_FOR_SYMBOL
+}
+
 export interface RenderTheme {
   /** La placa: plástico translúcido mate. */
   board: string
@@ -152,7 +173,7 @@ export function drawPattern(
       ctx.globalAlpha = only != null && v !== only ? 0.18 : 1
       ctx.fillStyle = bead.hex
 
-      if (cs >= 7) {
+      if (cs >= MIN_CELL_FOR_DETAIL) {
         const rad = Math.min(2, cs * 0.16)
         ctx.beginPath()
         ctx.roundRect(px + 0.5, py + 0.5, cs - 1, cs - 1, rad)
