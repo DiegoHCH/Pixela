@@ -291,6 +291,45 @@ describe('el inventario manda en los colores', () => {
   })
 })
 
+describe('el acento de la interfaz', () => {
+  test('sale del patrón al abrir la imagen', () => {
+    project.open(fakeImage(1200, 800))
+    expect(project.accentSource).toMatch(/^#[0-9A-F]{6}$/)
+  })
+
+  test('no se mueve mientras afinas los ajustes', () => {
+    // Es el motivo del cambio: recalcularlo en cada tic hacía parpadear los
+    // botones mientras los estabas usando.
+    project.open(fakeImage(1200, 800))
+    const antes = project.accentSource
+
+    project.contrast = 60
+    project.saturation = -40
+    project.dither = false
+    expect(project.accentSource).toBe(antes)
+
+    project.setShape(3, 2)
+    expect(project.accentSource).toBe(antes)
+  })
+
+  test('se vuelve a mirar al convertir', () => {
+    project.open(fakeImage(1200, 800))
+    project.contrast = 90
+    project.saturation = 100
+    const antes = project.accentSource
+
+    project.convert()
+    // Con esos ajustes el color dominante cambia, y ahí sí se actualiza.
+    expect(project.accentSource).not.toBe(antes)
+  })
+
+  test('sin imagen no hay acento que derivar', () => {
+    project.open(fakeImage(1200, 800))
+    project.close()
+    expect(project.accentSource).toBeNull()
+  })
+})
+
 describe('al cerrar', () => {
   test('no queda nada del proyecto anterior', () => {
     project.open(fakeImage(600, 600))

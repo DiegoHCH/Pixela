@@ -66,8 +66,27 @@ export function characteristicBead(pattern: Pattern, palette: Palette): number {
  */
 export function accentOf(pattern: Pattern, palette: Palette, theme: Theme): string {
   const i = characteristicBead(pattern, palette)
-  if (i < 0 || !hasCharacter(palette[i].hex)) return FALLBACK_ACCENT[theme]
-  return deriveAccent(palette[i].hex, theme)
+  return accentFromHex(i < 0 ? null : palette[i].hex, theme)
+}
+
+/**
+ * El acento a partir de un color ya elegido.
+ *
+ * Existe porque el acento **se fija y no se recalcula solo**: derivarlo de cada
+ * patrón intermedio hacía parpadear la interfaz mientras arrastras un
+ * deslizante, y encima cambiaba de color el botón que tienes debajo del cursor.
+ * El sistema de diseño quiere el acento *del patrón*, que es algo estable.
+ */
+export function accentFromHex(hex: string | null, theme: Theme): string {
+  if (!hex || !hasCharacter(hex)) return FALLBACK_ACCENT[theme]
+  return deriveAccent(hex, theme)
+}
+
+/** El color del que sacar el acento de un patrón, o `null` si no tiene. */
+export function accentSourceOf(pattern: Pattern, palette: Palette): string | null {
+  const i = characteristicBead(pattern, palette)
+  if (i < 0 || !hasCharacter(palette[i].hex)) return null
+  return palette[i].hex
 }
 
 /** Sólo para cuando no hay patrón abierto: en cuanto hay uno, manda el patrón. */
