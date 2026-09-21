@@ -5,8 +5,8 @@
  * usuario y encadena los pasos cuando cambian.
  */
 
-import { MIDI_SQUARE, layoutFor, patternSize, planBatches } from '../lib/boards'
-import { aspectOf, centeredCrop, cropImage, type Rect } from '../lib/crop'
+import { MIDI_SQUARE, boardSlice, layoutFor, patternSize, planBatches } from '../lib/boards'
+import { aspectOf, centeredCrop, clampToImage, cropImage, type Rect } from '../lib/crop'
 import { DEFAULT_PALETTE } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
@@ -17,12 +17,17 @@ import type { LoadedImage } from './load-image'
 /** Se mide en placas por defecto; «Cuentas» es la salida para un tamaño concreto. */
 export type Measure = 'boards' | 'beads'
 
+/** Encuadrar y mirar el patrón son dos pantallas, no dos pestañas. */
+export type Phase = 'crop' | 'pattern'
+
 /** Lo más grande que ofrece el selector de forma del montaje. */
 export const MAX_BOARDS_X = 5
 export const MAX_BOARDS_Y = 4
 
 class Project {
   image = $state<LoadedImage | null>(null)
+  /** En qué pantalla estás: encuadrando, o mirando el patrón. */
+  phase = $state<Phase>('crop')
   measure = $state<Measure>('boards')
   boardsX = $state(2)
   boardsY = $state(1)
@@ -36,6 +41,19 @@ class Project {
   sampleMode = $state<SampleMode>('average')
   dither = $state(true)
   maxColors = $state<number | null>(null)
+
+  /** El color aislado: apaga todos los demás en el lienzo. */
+  isolated = $state<number | null>(null)
+  /** La placa señalada en la tira, en índice de lectura. */
+  selectedBoard = $state<number | null>(null)
+
+  /**
+   * Sube cada vez que se convierte. Es lo que dispara la única animación de la
+   * app —las cuentas cayendo fila a fila— sin que se repita al mover un control
+   * después: esperar transiciones mientras ajustas algo es irritante.
+   */
+  conversionId = $state(0)
+  fallRows = $state(0)
 
   /** El tamaño del patrón en cuentas, venga de placas o de un tamaño a mano. */
   get grid(): { cols: number; rows: number } {
@@ -98,14 +116,59 @@ class Project {
     return this.batches.length === 1
   }
 
+  /** El recorte de la placa señalada, para verla sola y con sus huecos. */
+  get selectedBoardPattern(): Pattern | null {
+    const pattern = this.pattern
+    const layout = this.layout
+    const index = this.selectedBoard
+    if (!pattern || !layout || index == null) return null
+    return boardSlice(pattern, index % layout.cols, Math.floor(index / layout.cols), this.board)
+  }
+
   open(image: LoadedImage): void {
     this.image = image
+    this.phase = 'crop'
+    this.isolated = null
+    this.selectedBoard = null
     this.refitCrop()
   }
 
   close(): void {
     this.image = null
     this.crop = null
+    this.phase = 'crop'
+    this.isolated = null
+    this.selectedBoard = null
+  }
+
+  /** Del recorte al patrón. Aquí es donde caen las cuentas. */
+  convert(): void {
+    const pattern = this.pattern
+    if (!pattern) return
+    this.phase = 'pattern'
+    this.isolated = null
+    this.selectedBoard = null
+    this.fallRows = pattern.rows
+    this.conversionId++
+  }
+
+  backToCrop(): void {
+    this.phase = 'crop'
+    this.isolated = null
+    this.selectedBoard = null
+  }
+
+  /**
+   * Aislar un color sirve para dos cosas concretas: ver si aporta algo antes de
+   * comprarlo, y colocar todas sus cuentas de una tacada, que es como se monta
+   * rápido de verdad. Pulsar el mismo otra vez vuelve al patrón completo.
+   */
+  toggleIsolate(index: number): void {
+    this.isolated = this.isolated === index ? null : index
+  }
+
+  selectBoard(index: number | null): void {
+    this.selectedBoard = this.selectedBoard === index ? null : index
   }
 
   /** Elegir la forma del montaje reencuadra: la proporción ha cambiado. */
@@ -127,11 +190,12 @@ class Project {
   }
 
   /**
-   * Vuelve al recorte centrado más grande con la proporción actual.
+   * Reencuadra con la proporción actual.
    *
-   * Se pierde el encuadre fino al cambiar de forma, y es lo correcto: un
-   * recorte 2:1 metido a la fuerza en un 1:1 no es el encuadre que elegiste,
-   * es otro distinto sin que lo hayas decidido.
+   * Si ya había recorte se conserva su centro y su tamaño hasta donde la nueva
+   * proporción lo permita: encuadraste una cara y cambias de 2 × 1 a 3 × 2, y
+   * la cara sigue donde estaba. Saltar al centro de la imagen sería perder un
+   * encuadre que sí habías decidido.
    */
   refitCrop(): void {
     const image = this.image
@@ -139,7 +203,25 @@ class Project {
       this.crop = null
       return
     }
-    this.crop = centeredCrop(image.width, image.height, this.aspect)
+
+    const aspect = this.aspect
+    const largest = centeredCrop(image.width, image.height, aspect)
+    const previous = this.crop
+    if (!previous) {
+      this.crop = largest
+      return
+    }
+
+    const width = Math.min(previous.width, largest.width)
+    const height = width / aspect
+    const centerX = previous.x + previous.width / 2
+    const centerY = previous.y + previous.height / 2
+
+    this.crop = clampToImage(
+      { x: centerX - width / 2, y: centerY - height / 2, width, height },
+      image.width,
+      image.height,
+    )
   }
 }
 

@@ -10,6 +10,16 @@
 </script>
 
 <aside class="rail">
+  {#if project.phase === 'pattern' && project.image}
+    <section>
+      <h3>{i18n.t('rail.origin')}</h3>
+      <div class="file">
+        <span class="nm">{project.image.name}</span>
+        <span class="dm">{project.image.sourceWidth} × {project.image.sourceHeight}</span>
+      </div>
+    </section>
+  {/if}
+
   <section>
     <h3>{i18n.t('rail.measure')}</h3>
     <div class="seg" role="group" aria-label={i18n.t('rail.measure')}>
@@ -67,6 +77,36 @@
           />
         </label>
       </div>
+    </section>
+  {/if}
+
+  {#if project.phase === 'pattern'}
+    <!--
+      Con fotos el tope de colores no es un extra: sin él una imagen se va a
+      veinte y pico colores, o sea veinte y pico bolsas que comprar.
+    -->
+    <section>
+      <h3>{i18n.t('rail.color')}</h3>
+      <label class="toggle">
+        <input type="checkbox" checked={project.dither} onchange={() => (project.dither = !project.dither)} />
+        <span>{i18n.t('rail.dither')}</span>
+      </label>
+      <label class="slider">
+        <span class="top">
+          <span>{i18n.t('rail.maxColors')}</span>
+          <span class="val">{project.maxColors ?? i18n.t('rail.maxColors.none')}</span>
+        </span>
+        <input
+          type="range"
+          min="2"
+          max={project.palette.length}
+          value={project.maxColors ?? project.palette.length}
+          oninput={(e) => {
+            const v = e.currentTarget.valueAsNumber
+            project.maxColors = v >= project.palette.length ? null : v
+          }}
+        />
+      </label>
     </section>
   {/if}
 
@@ -165,6 +205,70 @@
   .pair {
     display: flex;
     gap: 8px;
+  }
+
+  .file {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--panel-2);
+    border: 1px solid var(--edge);
+    border-radius: var(--radius-square);
+    padding: 8px 10px;
+  }
+
+  .file .nm {
+    font-size: 12.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file .dm {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  .toggle input {
+    width: auto;
+    accent-color: var(--accent);
+  }
+
+  .slider {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 12px;
+  }
+
+  .slider .top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+
+  .slider .val {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink);
+  }
+
+  .slider input[type='range'] {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    accent-color: var(--accent);
   }
 
   label {

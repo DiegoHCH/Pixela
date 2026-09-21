@@ -6,6 +6,7 @@ export default {
   'bar.open': 'Abrir imagen',
   'bar.cancel': 'Cancelar',
   'bar.convert': 'Convertir a patrón',
+  'bar.back': 'Volver al recorte',
   'bar.noFile': 'Sin patrón',
 
   'empty.title': 'Arrastra una imagen aquí',
@@ -17,6 +18,23 @@ export default {
   'stage.crop': 'Recorte',
   'stage.handles': 'arrastra las esquinas',
   'stage.shape': '{x} × {y} placas',
+  'stage.pattern': 'Patrón',
+  'stage.isolated': 'Aislado',
+  'stage.size': '{cols} × {rows}',
+  'stage.boardsMeta': '{n} placas · {x} × {y}',
+  'stage.colors': '{n} colores',
+  'stage.board': 'Placa {n}',
+
+  'strip.title': 'Placas',
+  'strip.meta': '{n} placas de {cols} × {rows}',
+  'strip.hint': 'Pulsa una para verla sola.',
+
+  'box.title': 'Caja de cuentas',
+  'box.colors': '{n} colores',
+  'box.total': 'cuentas en total',
+  'box.isolatedUnit': 'cuentas de este color',
+  'box.hint': 'Pulsa un compartimento para aislar ese color.',
+  'box.hint.again': 'Pulsa otra vez para ver el patrón completo.',
 
   'rail.measure': 'Medir en',
   'rail.measure.boards': 'Placas',
@@ -36,6 +54,11 @@ export default {
   'rail.cost': 'Coste',
   'rail.cost.beads': 'Cuentas',
   'rail.cost.colors': 'Colores',
+  'rail.origin': 'Origen',
+  'rail.color': 'Color',
+  'rail.dither': 'Difuminado',
+  'rail.maxColors': 'Máximo de colores',
+  'rail.maxColors.none': 'sin tope',
 
   'preview.title': 'Previsualización',
   'preview.live': 'en vivo',

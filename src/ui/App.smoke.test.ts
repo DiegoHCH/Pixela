@@ -38,6 +38,13 @@ beforeAll(() => {
     },
   })
 
+  // Tampoco trae ResizeObserver, que es lo que usa `bind:clientWidth`.
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver
+
   // jsdom dice que el navegador está en inglés; aquí se prueba el idioma por defecto.
   localStorage.setItem('pixela:locale', 'es')
 })
@@ -56,6 +63,53 @@ test('arranca y enseña la placa vacía', async () => {
   // Sin imagen no hay recorte, ni previsualización, ni acento derivado.
   expect(target.textContent).not.toContain('Recorte')
 
+  unmount(app)
+  target.remove()
+})
+
+test('con una imagen abierta llega hasta el patrón', async () => {
+  const { default: App } = await import('./App.svelte')
+  const { project } = await import('../state/project.svelte')
+
+  const target = document.createElement('div')
+  document.body.appendChild(target)
+  const app = mount(App, { target })
+
+  // Una imagen de mentira: lo que se comprueba es el cableado de las pantallas.
+  const width = 240
+  const height = 120
+  const data = new Uint8ClampedArray(width * height * 4)
+  for (let i = 0; i < width * height; i++) {
+    data[i * 4] = (i % width) + 10
+    data[i * 4 + 1] = 80
+    data[i * 4 + 2] = 200
+    data[i * 4 + 3] = 255
+  }
+  project.open({
+    name: 'prueba.png',
+    width,
+    height,
+    sourceWidth: width,
+    sourceHeight: height,
+    pixels: { width, height, data },
+    source: document.createElement('canvas'),
+  })
+  flushSync()
+
+  expect(target.textContent).toContain('Recorte')
+  expect(target.textContent).toContain('Convertir a patrón')
+  expect(target.textContent).toContain('prueba.png')
+
+  project.convert()
+  flushSync()
+
+  expect(target.textContent).toContain('Caja de cuentas')
+  expect(target.textContent).toContain('Placas')
+  // El patrón tiene cuentas de verdad contadas, no un cero de relleno.
+  expect(project.total).toBe(58 * 29)
+  expect(target.textContent).toContain(project.total.toLocaleString())
+
+  project.close()
   unmount(app)
   target.remove()
 })
