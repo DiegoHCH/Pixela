@@ -13,7 +13,7 @@ import {
   PROJECT_FILE_VERSION,
   type ProjectFile,
 } from '../lib/project-file'
-import { downloadText } from './download'
+import { saveText, type SaveResult } from './download'
 import type { LoadedImage } from './load-image'
 
 /** Arma el archivo a partir de lo que hay abierto. */
@@ -39,10 +39,11 @@ export function buildProjectFile(
   }
 }
 
-export function saveProjectFile(file: ProjectFile): string {
+export async function saveProjectFile(
+  file: ProjectFile,
+): Promise<{ name: string; result: SaveResult }> {
   const name = projectFileName(file.name)
-  downloadText(JSON.stringify(file), name, 'application/json')
-  return name
+  return { name, result: await saveText(JSON.stringify(file), name, 'json') }
 }
 
 /** Lee un archivo de proyecto y reconstruye su imagen de trabajo. */
