@@ -35,9 +35,16 @@ class I18nState {
     document.documentElement.lang = locale
   }
 
-  /** Devuelve la clave si falta la traducción: se ve el hueco, no se esconde. */
-  t(key: MessageKey): string {
-    return DICTS[this.#locale][key] ?? es[key] ?? key
+  /**
+   * El texto de una clave, con los valores metidos en sus huecos `{así}`.
+   * Si falta la traducción devuelve la clave: el hueco se ve, no se esconde.
+   */
+  t(key: MessageKey, values?: Record<string, string | number>): string {
+    const raw = DICTS[this.#locale][key] ?? es[key] ?? key
+    if (!values) return raw
+    return raw.replace(/\{(\w+)\}/g, (match, name: string) =>
+      name in values ? String(values[name]) : match,
+    )
   }
 }
 

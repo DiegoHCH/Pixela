@@ -117,6 +117,14 @@ describe('la forma de la tanda', () => {
     expect(batchShape(layout(2, 3), 6)).toEqual({ cols: 2, rows: 3 })
   })
 
+  it('elige la forma que menos veces obliga a planchar', () => {
+    // Con 3 × 2 placas y dos en la mano: en vertical son tres tandas llenas,
+    // en horizontal cuatro con una a medias. Manda el número de tandas, no que
+    // la tanda se parezca a la forma del montaje.
+    expect(batchShape(layout(3, 2), 2)).toEqual({ cols: 1, rows: 2 })
+    expect(planBatches(layout(3, 2), 2)).toHaveLength(3)
+  })
+
   it('no propone más placas de las que tiene el montaje', () => {
     expect(batchShape(layout(2, 1), 8)).toEqual({ cols: 2, rows: 1 })
   })

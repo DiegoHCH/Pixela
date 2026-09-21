@@ -1,124 +1,391 @@
 <script lang="ts">
   import { LOCALES, i18n } from '../i18n/index.svelte'
-  import { theme } from '../state/theme.svelte'
+  import { accentOf } from '../lib/accent'
+  import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
+  import { project } from '../state/project.svelte'
+  import { applyAccent, theme } from '../state/theme.svelte'
+  import CropStage from './CropStage.svelte'
+  import DropZone from './DropZone.svelte'
+  import PatternPreview from './PatternPreview.svelte'
+  import Rail from './Rail.svelte'
 
-  const t = (key: Parameters<typeof i18n.t>[0]) => i18n.t(key)
+  let input = $state<HTMLInputElement | null>(null)
+  let dragging = $state(false)
+  let failure = $state<LoadFailure | null>(null)
+  let dragDepth = 0
+
+  async function open(file: File | null) {
+    if (!file) return
+    failure = null
+    try {
+      project.open(await loadImageFile(file))
+    } catch (error) {
+      failure = error instanceof ImageLoadError ? error.reason : 'decode'
+    }
+  }
+
+  function onDrop(event: DragEvent) {
+    event.preventDefault()
+    dragDepth = 0
+    dragging = false
+    void open(pickImageFile(event.dataTransfer))
+  }
+
+  function onDragEnter(event: DragEvent) {
+    event.preventDefault()
+    dragDepth++
+    dragging = true
+  }
+
+  function onDragLeave() {
+    // Contado por profundidad: entrar en un hijo dispara un «leave» del padre.
+    dragDepth = Math.max(0, dragDepth - 1)
+    if (dragDepth === 0) dragging = false
+  }
+
+  function onPaste(event: ClipboardEvent) {
+    const file = pickImageFile(event.clipboardData)
+    if (file) void open(file)
+  }
+
+  /**
+   * La app no tiene color de marca: el acento sale del patrón abierto. Sin
+   * patrón vuelve al de reserva.
+   */
+  $effect(() => {
+    const pattern = project.pattern
+    const current = theme.current
+    applyAccent(pattern ? accentOf(pattern, project.palette, current) : null, current)
+  })
 </script>
 
-<!--
-  Pantalla de espera, no la app. El plan es explícito: el pipeline puro y sus
-  tests van antes que la primera pantalla. Esto sólo demuestra que los tokens,
-  los dos temas y los dos idiomas están enchufados de verdad desde el principio.
--->
-<main>
-  <header>
-    <h1>{t('app.name')}</h1>
-    <p class="tagline">{t('app.tagline')}</p>
-  </header>
+<svelte:window onpaste={onPaste} />
 
-  <section class="panel">
-    <h2>{t('app.state.title')}</h2>
-    <p>{t('app.state.body')}</p>
-  </section>
-
-  <footer>
-    <div class="group" role="group" aria-label={t('theme.day') + ' / ' + t('theme.night')}>
-      <button
-        type="button"
-        aria-pressed={theme.current === 'day'}
-        onclick={() => theme.set('day')}>{t('theme.day')}</button
-      >
-      <button
-        type="button"
-        aria-pressed={theme.current === 'night'}
-        onclick={() => theme.set('night')}>{t('theme.night')}</button
-      >
-      {#if !theme.followsSystem}
-        <button type="button" class="ghost" onclick={() => theme.clear()}>
-          {t('theme.system')}
-        </button>
-      {/if}
+<div
+  class="app"
+  ondrop={onDrop}
+  ondragover={(e) => e.preventDefault()}
+  ondragenter={onDragEnter}
+  ondragleave={onDragLeave}
+  role="application"
+  aria-label={i18n.t('app.name')}
+>
+  <header class="bar">
+    <div class="brand">
+      <span class="name">{i18n.t('app.name')}</span>
+      <span class="file">{project.image?.name ?? i18n.t('bar.noFile')}</span>
     </div>
 
-    <div class="group" role="group" aria-label={t('lang.label')}>
-      {#each LOCALES as locale (locale)}
+    <div class="actions">
+      <div class="toggle" role="group" aria-label={i18n.t('lang.label')}>
+        {#each LOCALES as locale (locale)}
+          <button
+            type="button"
+            aria-pressed={i18n.locale === locale}
+            onclick={() => i18n.set(locale)}>{locale.toUpperCase()}</button
+          >
+        {/each}
+      </div>
+
+      <div class="toggle" role="group" aria-label={i18n.t('theme.day')}>
         <button
           type="button"
-          aria-pressed={i18n.locale === locale}
-          onclick={() => i18n.set(locale)}>{locale.toUpperCase()}</button
+          aria-pressed={theme.current === 'day'}
+          onclick={() => theme.set('day')}>{i18n.t('theme.day')}</button
         >
-      {/each}
+        <button
+          type="button"
+          aria-pressed={theme.current === 'night'}
+          onclick={() => theme.set('night')}>{i18n.t('theme.night')}</button
+        >
+      </div>
+
+      {#if project.image}
+        <button type="button" class="ghost" onclick={() => project.close()}>
+          {i18n.t('bar.cancel')}
+        </button>
+      {/if}
+      <button type="button" class="primary" onclick={() => input?.click()}>
+        {i18n.t('bar.open')}
+      </button>
     </div>
-  </footer>
-</main>
+  </header>
+
+  {#if failure}
+    <div class="error" role="alert">
+      <div>
+        <p class="et">{i18n.t(failure === 'type' ? 'error.type.title' : 'error.decode.title')}</p>
+        <p class="ed">{i18n.t(failure === 'type' ? 'error.type.body' : 'error.decode.body')}</p>
+      </div>
+      <button type="button" class="ghost" onclick={() => (failure = null)}>
+        {i18n.t('error.dismiss')}
+      </button>
+    </div>
+  {/if}
+
+  <div class="body">
+    {#if project.image}
+      <Rail />
+    {/if}
+
+    <main class="stage">
+      <div class="stage-top">
+        {#if project.image}
+          <span>{i18n.t('stage.crop')}</span>
+          <span class="k">{i18n.t('stage.shape', { x: project.boardsX, y: project.boardsY })}</span>
+          <span aria-hidden="true">·</span>
+          <span class="k">{i18n.t('stage.handles')}</span>
+        {:else}
+          <span>{dragging ? i18n.t('drop.hint') : i18n.t('bar.noFile')}</span>
+        {/if}
+      </div>
+
+      {#if project.image}
+        <CropStage />
+      {:else}
+        <DropZone {dragging} onopen={() => input?.click()} />
+      {/if}
+    </main>
+
+    {#if project.pattern}
+      <aside class="box">
+        <div class="box-head">
+          <span class="t">{i18n.t('preview.title')}</span>
+          <span class="c">{i18n.t('preview.live')}</span>
+        </div>
+        <div class="preview"><PatternPreview /></div>
+        <p class="note">{i18n.t('preview.note')}</p>
+        <div class="box-foot">
+          <span class="n">{project.total.toLocaleString()}</span>
+          <span class="u">{i18n.t('preview.total')}</span>
+        </div>
+      </aside>
+    {/if}
+  </div>
+
+  <input
+    bind:this={input}
+    type="file"
+    accept="image/png,image/jpeg,image/gif,image/webp"
+    hidden
+    onchange={(e) => {
+      void open(e.currentTarget.files?.[0] ?? null)
+      e.currentTarget.value = ''
+    }}
+  />
+</div>
 
 <style>
-  main {
+  .app {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding: 48px 28px;
-    max-width: 640px;
-    margin: 0 auto;
+    background: var(--surface);
   }
 
-  h1 {
-    font-size: 30px;
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .name {
+    font-family: var(--font-display);
+    font-size: 16px;
     color: var(--on-dark);
   }
 
-  .tagline {
-    margin: 2px 0 0;
+  .file {
+    font-size: 12.5px;
     color: var(--on-dark-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--edge);
-    border-radius: var(--radius-square);
-    box-shadow: var(--shadow-app);
-    padding: 20px 22px;
-    color: var(--ink-2);
-  }
-
-  .panel h2 {
-    font-size: 17px;
-    color: var(--ink);
-    margin-bottom: 6px;
-  }
-
-  .panel p {
-    margin: 0;
-  }
-
-  footer {
+  .actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: auto;
+    align-items: center;
+    gap: 8px;
   }
 
-  .group {
+  .toggle {
     display: flex;
-    gap: 6px;
-  }
-
-  button {
+    gap: 2px;
     background: var(--surface-3);
-    color: var(--on-dark);
-    border: 1px solid transparent;
-    padding: 6px 14px;
+    border-radius: var(--radius-square);
+    padding: 2px;
   }
 
-  button[aria-pressed='true'] {
+  .toggle button {
+    background: transparent;
+    border: 0;
+    color: var(--on-dark-2);
+    font-size: 12px;
+    padding: 4px 9px;
+  }
+
+  .toggle button[aria-pressed='true'] {
     background: var(--accent);
     color: var(--accent-ink);
   }
 
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 0;
+    padding: 7px 15px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
   button.ghost {
     background: transparent;
-    border-color: var(--surface-3);
+    border: 1px solid var(--surface-3);
     color: var(--on-dark-2);
+    padding: 6px 13px;
+    font-size: 13px;
+  }
+
+  .error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--warn-soft);
+    border-bottom: 1px solid var(--warn);
+    color: var(--on-dark);
+  }
+
+  .et {
+    margin: 0;
+    font-weight: 600;
+    font-size: 13.5px;
+  }
+
+  .ed {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--on-dark-2);
+  }
+
+  .body {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  .stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--surface);
+  }
+
+  .stage-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--on-dark-2);
+    background: var(--surface-2);
+  }
+
+  .stage-top .k {
+    color: var(--on-dark);
+  }
+
+  .box {
+    width: 300px;
+    flex: 0 0 300px;
+    background: var(--panel);
+    border-left: 1px solid var(--edge);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .box-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--edge);
+  }
+
+  .box-head .t {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .box-head .c {
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+
+  .preview {
+    padding: 14px;
+    background: var(--surface);
+    display: flex;
+    justify-content: center;
+  }
+
+  .note {
+    margin: 0;
+    padding: 13px 15px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+
+  .box-foot {
+    margin-top: auto;
+    padding: 12px 15px;
+    border-top: 1px solid var(--edge);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .box-foot .n {
+    font-family: var(--font-display);
+    font-size: 22px;
+  }
+
+  .box-foot .u {
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  /*
+    El escritorio son tres columnas y el móvil son tres pestañas con el mismo
+    contenido. Las pestañas llegan con la hoja inferior; por ahora se apilan,
+    que es lo honesto mientras esa pieza no exista.
+  */
+  @media (max-width: 900px) {
+    .body {
+      flex-direction: column;
+    }
+
+    .box {
+      width: auto;
+      flex: none;
+      border-left: 0;
+      border-top: 1px solid var(--edge);
+    }
   }
 </style>
