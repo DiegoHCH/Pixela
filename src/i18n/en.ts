@@ -79,6 +79,10 @@ const en: typeof es = {
   'rail.detail.title': 'At this size the drawing is lost.',
   'rail.detail.body':
     'It is flat-shaded artwork, and in {cells} beads the features do not read. More boards and it becomes recognisable.',
+  'rail.far.title': 'This pattern is a poor likeness.',
+  'rail.far.body':
+    'With your {colors} colours, each bead lands {delta} away on average from the colour the image asked for. Under 12 the likeness is good. It usually happens with faces: they need several skin tones, not one.',
+  'rail.far.action': 'See how it would look with the whole catalogue',
   'rail.dither': 'Dithering',
   'rail.adjust.brightness': 'Brightness',
   'rail.adjust.contrast': 'Contrast',
