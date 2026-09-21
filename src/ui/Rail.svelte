@@ -105,6 +105,31 @@
     </section>
   {/if}
 
+  {#if project.farFromImage && project.fidelity}
+    <!--
+      El aviso que faltaba cuando una foto sale mal: la app puede medir cuánto
+      se aleja el patrón de la imagen, y callarlo era peor. Con una paleta corta
+      una cara sale gris o rosa y el algoritmo no tiene la culpa — no hay con
+      qué. Medido sobre un retrato: 9,7 con el catálogo, 20,5 con 21 colores.
+    -->
+    <section>
+      <div class="notice warn">
+        <p class="nt">{i18n.t('rail.far.title')}</p>
+        <p class="nd">
+          {i18n.t('rail.far.body', {
+            delta: project.fidelity.mean.toFixed(0),
+            colors: project.palette.length,
+          })}
+        </p>
+        {#if project.onlyOwned}
+          <button type="button" class="quiet" onclick={() => project.setOnlyOwned(false)}>
+            {i18n.t('rail.far.action')}
+          </button>
+        {/if}
+      </div>
+    </section>
+  {/if}
+
   {#if project.image}
     <!--
       Los ajustes se proponen al cargar según lo que sea la imagen, pero viven

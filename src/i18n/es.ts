@@ -79,6 +79,10 @@ export default {
   'rail.detail.title': 'A este tamaño se pierde el dibujo.',
   'rail.detail.body':
     'Es una ilustración de zonas planas, y en {cells} cuentas los rasgos no se leen. Con más placas se reconoce.',
+  'rail.far.title': 'Este patrón se parece poco a la foto.',
+  'rail.far.body':
+    'Con tus {colors} colores, cada cuenta se aleja {delta} de media del color que pedía la imagen. Por debajo de 12 el parecido es bueno. Suele pasar con caras: hacen falta varios tonos de piel y no uno.',
+  'rail.far.action': 'Ver cómo quedaría con todo el catálogo',
   'rail.dither': 'Difuminado',
   'rail.adjust.brightness': 'Brillo',
   'rail.adjust.contrast': 'Contraste',

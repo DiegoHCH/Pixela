@@ -15,6 +15,7 @@ import {
   type ImageKind,
 } from '../lib/detect'
 import { isNeutral, type Adjustments } from '../lib/adjust'
+import { fidelity, isFar, type Fidelity } from '../lib/fidelity'
 import { ownedPalette } from '../lib/inventory'
 import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
@@ -162,6 +163,21 @@ class Project {
 
   get pattern(): Pattern | null {
     return this.#result?.pattern ?? null
+  }
+
+  /**
+   * Cuánto se aleja el patrón de la imagen. Se mide en la misma pasada que lo
+   * genera: con una paleta corta, una foto de una cara sale con la piel gris y
+   * el algoritmo no tiene la culpa — no hay con qué.
+   */
+  get fidelity(): Fidelity | null {
+    const r = this.#result
+    return r ? fidelity(r.grid, r.pattern, r.palette) : null
+  }
+
+  /** Si conviene decir que el parecido es flojo. */
+  get farFromImage(): boolean {
+    return isFar(this.fidelity)
   }
 
   /** La paleta con la que se cuantizó: los índices del patrón son suyos. */
