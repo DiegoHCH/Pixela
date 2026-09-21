@@ -4,9 +4,12 @@
   import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
   import { project } from '../state/project.svelte'
   import { applyAccent, theme } from '../state/theme.svelte'
+  import BeadBox from './BeadBox.svelte'
+  import BoardStrip from './BoardStrip.svelte'
   import CropStage from './CropStage.svelte'
   import DropZone from './DropZone.svelte'
   import PatternPreview from './PatternPreview.svelte'
+  import PatternStage from './PatternStage.svelte'
   import Rail from './Rail.svelte'
 
   let input = $state<HTMLInputElement | null>(null)
@@ -100,14 +103,25 @@
         >
       </div>
 
-      {#if project.image}
+      {#if project.phase === 'pattern'}
+        <button type="button" class="ghost" onclick={() => project.backToCrop()}>
+          {i18n.t('bar.back')}
+        </button>
+        <button type="button" class="ghost" onclick={() => input?.click()}>
+          {i18n.t('bar.open')}
+        </button>
+      {:else if project.image}
         <button type="button" class="ghost" onclick={() => project.close()}>
           {i18n.t('bar.cancel')}
         </button>
+        <button type="button" class="primary" onclick={() => project.convert()}>
+          {i18n.t('bar.convert')}
+        </button>
+      {:else}
+        <button type="button" class="primary" onclick={() => input?.click()}>
+          {i18n.t('bar.open')}
+        </button>
       {/if}
-      <button type="button" class="primary" onclick={() => input?.click()}>
-        {i18n.t('bar.open')}
-      </button>
     </div>
   </header>
 
@@ -130,7 +144,33 @@
 
     <main class="stage">
       <div class="stage-top">
-        {#if project.image}
+        {#if project.phase === 'pattern' && project.pattern}
+          <span>
+            {project.isolated != null ? i18n.t('stage.isolated') : i18n.t('stage.pattern')}
+          </span>
+          {#if project.selectedBoard != null}
+            <span class="k">{i18n.t('stage.board', { n: project.selectedBoard + 1 })}</span>
+          {:else}
+            <span class="k">
+              {i18n.t('stage.size', {
+                cols: project.pattern.cols,
+                rows: project.pattern.rows,
+              })}
+            </span>
+          {/if}
+          {#if project.layout}
+            <span aria-hidden="true">·</span>
+            <span class="k">
+              {i18n.t('stage.boardsMeta', {
+                n: project.layout.total,
+                x: project.layout.cols,
+                y: project.layout.rows,
+              })}
+            </span>
+          {/if}
+          <span aria-hidden="true">·</span>
+          <span class="k">{i18n.t('stage.colors', { n: project.counts.length })}</span>
+        {:else if project.image}
           <span>{i18n.t('stage.crop')}</span>
           <span class="k">{i18n.t('stage.shape', { x: project.boardsX, y: project.boardsY })}</span>
           <span aria-hidden="true">·</span>
@@ -140,14 +180,19 @@
         {/if}
       </div>
 
-      {#if project.image}
+      {#if project.phase === 'pattern'}
+        <PatternStage />
+        <BoardStrip />
+      {:else if project.image}
         <CropStage />
       {:else}
         <DropZone {dragging} onopen={() => input?.click()} />
       {/if}
     </main>
 
-    {#if project.pattern}
+    {#if project.phase === 'pattern' && project.pattern}
+      <BeadBox />
+    {:else if project.pattern}
       <aside class="box">
         <div class="box-head">
           <span class="t">{i18n.t('preview.title')}</span>

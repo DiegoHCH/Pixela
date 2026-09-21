@@ -7,6 +7,7 @@ const en: typeof es = {
   'bar.open': 'Open image',
   'bar.cancel': 'Cancel',
   'bar.convert': 'Convert to pattern',
+  'bar.back': 'Back to the crop',
   'bar.noFile': 'No pattern',
 
   'empty.title': 'Drag an image here',
@@ -17,6 +18,23 @@ const en: typeof es = {
   'stage.crop': 'Crop',
   'stage.handles': 'drag the corners',
   'stage.shape': '{x} × {y} boards',
+  'stage.pattern': 'Pattern',
+  'stage.isolated': 'Isolated',
+  'stage.size': '{cols} × {rows}',
+  'stage.boardsMeta': '{n} boards · {x} × {y}',
+  'stage.colors': '{n} colours',
+  'stage.board': 'Board {n}',
+
+  'strip.title': 'Boards',
+  'strip.meta': '{n} boards of {cols} × {rows}',
+  'strip.hint': 'Tap one to see it on its own.',
+
+  'box.title': 'Bead box',
+  'box.colors': '{n} colours',
+  'box.total': 'beads in total',
+  'box.isolatedUnit': 'beads of this colour',
+  'box.hint': 'Tap a compartment to isolate that colour.',
+  'box.hint.again': 'Tap it again to see the whole pattern.',
 
   'rail.measure': 'Measure in',
   'rail.measure.boards': 'Boards',
@@ -36,6 +54,11 @@ const en: typeof es = {
   'rail.cost': 'Cost',
   'rail.cost.beads': 'Beads',
   'rail.cost.colors': 'Colours',
+  'rail.origin': 'Source',
+  'rail.color': 'Colour',
+  'rail.dither': 'Dithering',
+  'rail.maxColors': 'Colour cap',
+  'rail.maxColors.none': 'no cap',
 
   'preview.title': 'Preview',
   'preview.live': 'live',

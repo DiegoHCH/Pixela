@@ -118,6 +118,85 @@ describe('midiendo en cuentas', () => {
   })
 })
 
+describe('al convertir', () => {
+  test('cambia de pantalla y arma la caída de las cuentas', () => {
+    project.open(fakeImage(1200, 800))
+    const antes = project.conversionId
+    project.convert()
+
+    expect(project.phase).toBe('pattern')
+    expect(project.fallRows).toBe(29)
+    expect(project.conversionId).toBe(antes + 1)
+  })
+
+  test('sin patrón no hay nada que convertir', () => {
+    project.convert()
+    expect(project.phase).toBe('crop')
+  })
+
+  test('volver al recorte apaga lo que sólo tiene sentido en el patrón', () => {
+    project.open(fakeImage(1200, 800))
+    project.convert()
+    project.toggleIsolate(3)
+    project.selectBoard(1)
+    project.backToCrop()
+
+    expect(project.phase).toBe('crop')
+    expect(project.isolated).toBeNull()
+    expect(project.selectedBoard).toBeNull()
+  })
+})
+
+describe('aislar un color', () => {
+  test('se enciende y se apaga con el mismo gesto', () => {
+    project.open(fakeImage(1200, 800))
+    const color = project.counts[0].index
+
+    project.toggleIsolate(color)
+    expect(project.isolated).toBe(color)
+    project.toggleIsolate(color)
+    expect(project.isolated).toBeNull()
+  })
+})
+
+describe('la placa señalada', () => {
+  test('se recorta del patrón con el tamaño de la placa', () => {
+    project.open(fakeImage(1200, 800))
+    project.selectBoard(1)
+
+    const placa = project.selectedBoardPattern!
+    expect([placa.cols, placa.rows]).toEqual([29, 29])
+  })
+
+  test('sin placa señalada no hay recorte de placa', () => {
+    project.open(fakeImage(1200, 800))
+    expect(project.selectedBoardPattern).toBeNull()
+  })
+})
+
+describe('al cambiar de proporción con el encuadre hecho', () => {
+  test('conserva el centro y el zoom en vez de saltar al medio', () => {
+    project.open(fakeImage(1200, 800))
+    // Un recorte pequeño arriba a la izquierda: un encuadre decidido a mano.
+    project.crop = { x: 100, y: 100, width: 400, height: 200 }
+
+    project.setShape(1, 1)
+
+    const crop = project.crop!
+    expect(crop.width / crop.height).toBeCloseTo(1, 6)
+    // El centro estaba en (300, 200) y ahí sigue.
+    expect(crop.x + crop.width / 2).toBeCloseTo(300, 6)
+    expect(crop.y + crop.height / 2).toBeCloseTo(200, 6)
+    // Y no se ha estirado hasta llenar la imagen.
+    expect(crop.width).toBeLessThanOrEqual(400)
+  })
+
+  test('sin encuadre previo, el recorte más grande que quepa', () => {
+    project.open(fakeImage(1200, 800))
+    expect(project.crop!.width).toBe(1200)
+  })
+})
+
 describe('al cerrar', () => {
   test('no queda nada del proyecto anterior', () => {
     project.open(fakeImage(600, 600))
