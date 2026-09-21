@@ -32,6 +32,7 @@
       palette,
       cellSize,
       theme: current,
+      mode: project.renderMode,
       board: project.board,
     })
   })

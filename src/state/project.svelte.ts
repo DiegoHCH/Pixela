@@ -14,6 +14,7 @@ import {
   suggestedSettingsFor,
   type ImageKind,
 } from '../lib/detect'
+import { isNeutral, type Adjustments } from '../lib/adjust'
 import { ownedPalette } from '../lib/inventory'
 import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
@@ -73,6 +74,23 @@ class Project {
   sampleMode = $state<SampleMode>('average')
   dither = $state(true)
   maxColors = $state<number | null>(null)
+
+  /**
+   * Brillo, contraste y saturación. Con fotos cambian el resultado tanto como
+   * el difuminado: las cuentas son colores planos y saturados, así que subir
+   * algo el contraste casi siempre mejora el patrón.
+   */
+  brightness = $state(0)
+  contrast = $state(0)
+  saturation = $state(0)
+
+  /**
+   * Cómo se dibuja: color, o una letra por color. Los símbolos no son para
+   * imprimir —eso es otro modo— sino para montar cuando dos colores se parecen
+   * demasiado en pantalla, y para que la app sirva a quien no distingue rojo de
+   * verde.
+   */
+  renderMode = $state<'color' | 'symbol'>('color')
 
   /** Qué clase de imagen es, mirada una sola vez al cargar. */
   imageKind = $state<ImageKind | null>(null)
@@ -138,6 +156,7 @@ class Project {
       mode: this.sampleMode,
       dither: this.dither,
       maxColors: this.maxColors ?? undefined,
+      adjustments: this.adjustments,
     })
   })
 
@@ -189,6 +208,20 @@ class Project {
     return losesDetailFor(this.imageKind, cols, rows)
   }
 
+  get adjustments(): Adjustments {
+    return { brightness: this.brightness, contrast: this.contrast, saturation: this.saturation }
+  }
+
+  get adjusted(): boolean {
+    return !isNeutral(this.adjustments)
+  }
+
+  resetAdjustments(): void {
+    this.brightness = 0
+    this.contrast = 0
+    this.saturation = 0
+  }
+
   /** El recorte de la placa señalada, para verla sola y con sus huecos. */
   get selectedBoardPattern(): Pattern | null {
     const pattern = this.pattern
@@ -211,6 +244,7 @@ class Project {
     this.isolated = null
     this.selectedBoard = null
     this.maxColors = null
+    this.resetAdjustments()
     this.refitCrop()
 
     const stats = imageStats(image.pixels)

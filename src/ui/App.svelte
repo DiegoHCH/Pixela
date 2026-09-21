@@ -75,6 +75,7 @@
         board: single ? undefined : project.board,
         boardNumber: single ? project.selectedBoard! + 1 : undefined,
         only: project.isolated,
+        mode: project.renderMode,
       })
     } catch {
       failure = 'export'

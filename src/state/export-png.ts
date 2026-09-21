@@ -7,7 +7,7 @@
  */
 
 import { EXPORT_CELL_SIZE, exportFileName } from '../lib/export'
-import { drawPattern } from '../lib/render'
+import { drawPattern, type RenderMode } from '../lib/render'
 import type { Board, Palette, Pattern } from '../lib/types'
 import { downloadBlob } from './download'
 
@@ -20,6 +20,8 @@ export interface ExportOptions {
   boardNumber?: number
   /** Un solo color, para la hoja de «coloca todo el rojo». */
   only?: number | null
+  /** Color o símbolos: sale como lo estás mirando. */
+  mode?: RenderMode
   cellSize?: number
 }
 
@@ -49,6 +51,7 @@ export async function exportPatternPng(
     // La impresión y lo que se guarda usan siempre el tema día.
     theme: 'day',
     board: options.board,
+    mode: options.mode ?? 'color',
     only: options.only ?? null,
   })
 

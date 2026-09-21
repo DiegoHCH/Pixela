@@ -8,6 +8,16 @@
   const layout = $derived(project.layout)
   const batches = $derived(project.batches)
   const colors = $derived(project.counts.length)
+
+  /** Los tres ajustes, para no repetir el mismo bloque de deslizante. */
+  const AJUSTES = [
+    { clave: 'brightness', etiqueta: 'rail.adjust.brightness' },
+    { clave: 'contrast', etiqueta: 'rail.adjust.contrast' },
+    { clave: 'saturation', etiqueta: 'rail.adjust.saturation' },
+  ] as const
+
+  /** Un ajuste se lee mejor con signo: «+12» dice más que «12». */
+  const firma = (n: number) => (n > 0 ? `+${n}` : String(n))
 </script>
 
 <aside class="rail">
@@ -120,6 +130,33 @@
         <input type="checkbox" checked={project.dither} onchange={() => (project.dither = !project.dither)} />
         <span>{i18n.t('rail.dither')}</span>
       </label>
+
+      <!--
+        Brillo, contraste y saturación. Con fotos cambian el resultado tanto
+        como el difuminado: las cuentas son colores planos y muy saturados, así
+        que subir algo el contraste casi siempre acerca el patrón a la imagen.
+      -->
+      {#each AJUSTES as ajuste (ajuste.clave)}
+        <label class="slider">
+          <span class="top">
+            <span>{i18n.t(ajuste.etiqueta)}</span>
+            <span class="val">{firma(project[ajuste.clave])}</span>
+          </span>
+          <input
+            type="range"
+            min="-100"
+            max="100"
+            step="5"
+            value={project[ajuste.clave]}
+            oninput={(e) => (project[ajuste.clave] = e.currentTarget.valueAsNumber)}
+          />
+        </label>
+      {/each}
+      {#if project.adjusted}
+        <button type="button" class="quiet" onclick={() => project.resetAdjustments()}>
+          {i18n.t('rail.adjust.reset')}
+        </button>
+      {/if}
       <label class="toggle">
         <input
           type="checkbox"
@@ -150,6 +187,25 @@
           }}
         />
       </label>
+    </section>
+  {/if}
+
+  {#if project.phase === 'pattern' && project.pattern}
+    <section>
+      <h3>{i18n.t('rail.draw')}</h3>
+      <div class="seg" role="group" aria-label={i18n.t('rail.draw')}>
+        <button
+          type="button"
+          aria-pressed={project.renderMode === 'color'}
+          onclick={() => (project.renderMode = 'color')}>{i18n.t('rail.draw.color')}</button
+        >
+        <button
+          type="button"
+          aria-pressed={project.renderMode === 'symbol'}
+          onclick={() => (project.renderMode = 'symbol')}>{i18n.t('rail.draw.symbol')}</button
+        >
+      </div>
+      <p class="read dim">{i18n.t('rail.draw.note')}</p>
     </section>
   {/if}
 
