@@ -50,6 +50,7 @@
     const current = theme.current
     const only = project.isolated
     const rowsVisible = fallen
+    const mode = project.renderMode
     const isWhole = whole
 
     if (!el || !pattern || boxWidth <= 0 || boxHeight <= 0) return
@@ -72,6 +73,7 @@
       palette,
       cellSize,
       theme: current,
+      mode,
       only,
       // Una placa sola no lleva costuras: ella *es* la placa.
       board: isWhole ? project.board : undefined,
