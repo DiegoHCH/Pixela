@@ -210,14 +210,16 @@
   .stage-canvas {
     flex: 1;
     min-height: 0;
+    min-width: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: auto;
     padding: 18px;
   }
 
   canvas {
     display: block;
+    /* Centra cuando cabe y deja llegar al borde cuando no. */
+    margin: auto;
     touch-action: none;
     border-radius: var(--radius-square);
   }

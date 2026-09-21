@@ -285,8 +285,17 @@
 </div>
 
 <style>
+  /*
+    La app ocupa la ventana y ni un píxel más: lo que sobra se desplaza *dentro*
+    de cada panel. Con `min-height` el contenedor crecía con su contenido —la
+    columna de ajustes es larga—, el lienzo medía ese alto inflado y se dibujaba
+    enorme por debajo del pliegue. `dvh` además descuenta la barra del navegador
+    en el móvil, que con `vh` deja cien píxeles fuera de la pantalla.
+  */
   .app {
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     background: var(--surface);
@@ -406,10 +415,13 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    /* Sin esto, un lienzo alto no deja encoger a la mesa y desborda. */
+    min-height: 0;
     background: var(--surface);
   }
 
   .stage-top {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 8px;
