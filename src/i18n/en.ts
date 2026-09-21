@@ -11,12 +11,14 @@ const en: typeof es = {
   'bar.noFile': 'No pattern',
   'bar.inventory': 'My beads',
   'bar.done': 'Done',
+  'bar.save': 'Save project',
   'bar.export': 'Export PNG',
   'bar.exportBoard': 'Export board {n}',
   'bar.exporting': 'Exporting…',
 
   'empty.title': 'Drag an image here',
   'empty.body': 'PNG, JPG or GIF. It is converted inside your browser: the image never leaves this machine.',
+  'empty.project': 'And if you drag in a saved project (.pixela.json), it opens where you left it.',
   'drop.title': 'Drop it here',
   'drop.hint': 'Drop to convert',
 
@@ -111,6 +113,8 @@ const en: typeof es = {
   'error.decode.body': 'It may be damaged, or in a format this browser does not open.',
   'error.export.title': 'The export failed',
   'error.export.body': 'The pattern is untouched; give it another go.',
+  'error.project.title': 'The project could not be opened',
+  'error.project.body': 'The file does not look like a Pixela project.',
   'error.dismiss': 'Got it',
 
   'inv.title': 'Inventory',

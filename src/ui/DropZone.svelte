@@ -36,6 +36,7 @@
   <canvas bind:this={canvas}></canvas>
   <p class="title">{dragging ? i18n.t('drop.title') : i18n.t('empty.title')}</p>
   <p class="body">{i18n.t('empty.body')}</p>
+  <p class="body dim">{i18n.t('empty.project')}</p>
   {#if !dragging}
     <button type="button" class="primary" onclick={onopen}>{i18n.t('bar.open')}</button>
   {/if}
@@ -83,6 +84,11 @@
     max-width: 42ch;
     font-size: 13px;
     color: var(--on-dark-2);
+  }
+
+  .body.dim {
+    font-size: 12.5px;
+    opacity: 0.75;
   }
 
   button.primary {

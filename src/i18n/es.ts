@@ -10,6 +10,7 @@ export default {
   'bar.noFile': 'Sin patrón',
   'bar.inventory': 'Mis cuentas',
   'bar.done': 'Listo',
+  'bar.save': 'Guardar proyecto',
   'bar.export': 'Exportar PNG',
   'bar.exportBoard': 'Exportar placa {n}',
   'bar.exporting': 'Exportando…',
@@ -17,6 +18,7 @@ export default {
   'empty.title': 'Arrastra una imagen aquí',
   'empty.body':
     'PNG, JPG o GIF. Se convierte dentro de tu navegador: la imagen no sale de este equipo.',
+  'empty.project': 'Y si arrastras un proyecto guardado (.pixela.json), se abre donde lo dejaste.',
   'drop.title': 'Suelta aquí',
   'drop.hint': 'Soltar para convertir',
 
@@ -111,6 +113,8 @@ export default {
   'error.decode.body': 'Puede estar dañada o en un formato que este navegador no abre.',
   'error.export.title': 'No se pudo exportar',
   'error.export.body': 'El patrón sigue intacto; vuelve a intentarlo.',
+  'error.project.title': 'No se pudo abrir el proyecto',
+  'error.project.body': 'El archivo no parece un proyecto de Pixela.',
   'error.dismiss': 'Entendido',
 
   'inv.title': 'Inventario',

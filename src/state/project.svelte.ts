@@ -26,6 +26,7 @@ import type { SampleMode } from '../lib/sample'
 import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
 import type { Board, Palette, Pattern } from '../lib/types'
 import { inventory } from './inventory.svelte'
+import type { ProjectFile } from '../lib/project-file'
 import type { LoadedImage } from './load-image'
 import { readNumber, readString, writeNumber, writeString } from './storage'
 
@@ -299,6 +300,61 @@ class Project {
     this.selectedBoard = null
     this.imageKind = null
     this.accentSource = null
+  }
+
+  /** Los ajustes que definen el patrón, para guardarlos en un archivo. */
+  get settings() {
+    return {
+      crop: this.crop ?? { x: 0, y: 0, width: 1, height: 1 },
+      measure: this.measure,
+      boardsX: this.boardsX,
+      boardsY: this.boardsY,
+      beadCols: this.beadCols,
+      beadRows: this.beadRows,
+      board: { cols: this.board.cols, rows: this.board.rows },
+      sampleMode: this.sampleMode,
+      dither: this.dither,
+      maxColors: this.maxColors,
+      brightness: this.brightness,
+      contrast: this.contrast,
+      saturation: this.saturation,
+      renderMode: this.renderMode,
+      onlyOwned: this.onlyOwned,
+    }
+  }
+
+  /**
+   * Abre un proyecto guardado.
+   *
+   * No pasa por la propuesta automática de `open()`: los ajustes del archivo
+   * son decisiones que ya tomaste, y volver a proponer encima las borraría.
+   */
+  restore(image: LoadedImage, file: ProjectFile): void {
+    this.image = image
+    this.phase = 'crop'
+    this.isolated = null
+    this.selectedBoard = null
+    this.imageKind = kindFromStats(imageStats(image.pixels))
+
+    this.measure = file.measure
+    this.boardsX = file.boardsX
+    this.boardsY = file.boardsY
+    this.beadCols = file.beadCols
+    this.beadRows = file.beadRows
+    this.board = { cols: file.board.cols, rows: file.board.rows }
+    this.sampleMode = file.sampleMode
+    this.dither = file.dither
+    this.maxColors = file.maxColors
+    this.brightness = file.brightness
+    this.contrast = file.contrast
+    this.saturation = file.saturation
+    this.renderMode = file.renderMode
+    this.onlyOwned = file.onlyOwned
+
+    // El recorte va al final: los ajustes de arriba cambian la proporción, y
+    // ponerlo antes lo dejaría reencuadrado por `refitCrop`.
+    this.crop = clampToImage(file.crop, image.width, image.height)
+    this.refreshAccent()
   }
 
   /** Vuelve a mirar de qué color es el patrón. Sólo en momentos concretos. */

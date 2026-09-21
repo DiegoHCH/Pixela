@@ -87,9 +87,20 @@ export async function loadImageFile(file: File): Promise<LoadedImage> {
   }
 }
 
-/** El primer archivo de imagen de un arrastre o de un pegado. */
+/**
+ * El primer archivo utilizable de un arrastre o de un pegado: una imagen, o un
+ * proyecto guardado. Filtrar sólo imágenes dejaba caer los `.json` en silencio.
+ */
 export function pickImageFile(items: DataTransfer | null): File | null {
   if (!items) return null
   const files = [...items.files]
-  return files.find((f) => !f.type || f.type.startsWith('image/')) ?? null
+  return (
+    files.find(
+      (f) =>
+        !f.type ||
+        f.type.startsWith('image/') ||
+        f.type === 'application/json' ||
+        /\.json$/i.test(f.name),
+    ) ?? null
+  )
 }
