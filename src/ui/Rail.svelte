@@ -80,13 +80,41 @@
     </section>
   {/if}
 
-  {#if project.phase === 'pattern'}
+  {#if project.losesDetail}
     <!--
-      Con fotos el tope de colores no es un extra: sin él una imagen se va a
-      veinte y pico colores, o sea veinte y pico bolsas que comprar.
+      El aviso que faltaba. El plan avisa del patrón demasiado grande —el que no
+      cabe en tus placas—; éste es el contrario, y es el que de verdad arruina un
+      intento: un dibujo de líneas metido en 841 cuentas no se reconoce.
     -->
     <section>
-      <h3>{i18n.t('rail.color')}</h3>
+      <div class="notice warn">
+        <p class="nt">{i18n.t('rail.detail.title')}</p>
+        <p class="nd">{i18n.t('rail.detail.body', { cells: grid.cols * grid.rows })}</p>
+      </div>
+    </section>
+  {/if}
+
+  {#if project.image}
+    <!--
+      Los ajustes se proponen al cargar según lo que sea la imagen, pero viven
+      aquí a la vista: un modo automático que no se puede corregir es peor que no
+      tenerlo. Y con fotos el tope de colores no es un extra — sin él una imagen
+      se va a veinte y pico colores, o sea veinte y pico bolsas que comprar.
+    -->
+    <section>
+      <h3>{i18n.t('rail.image')}</h3>
+      <div class="seg" role="group" aria-label={i18n.t('rail.image')}>
+        <button
+          type="button"
+          aria-pressed={project.sampleMode === 'average'}
+          onclick={() => (project.sampleMode = 'average')}>{i18n.t('rail.mode.average')}</button
+        >
+        <button
+          type="button"
+          aria-pressed={project.sampleMode === 'point'}
+          onclick={() => (project.sampleMode = 'point')}>{i18n.t('rail.mode.point')}</button
+        >
+      </div>
       <label class="toggle">
         <input type="checkbox" checked={project.dither} onchange={() => (project.dither = !project.dither)} />
         <span>{i18n.t('rail.dither')}</span>

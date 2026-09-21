@@ -59,6 +59,12 @@ const en: typeof es = {
   'rail.cost.colors': 'Colours',
   'rail.origin': 'Source',
   'rail.color': 'Colour',
+  'rail.image': 'Image',
+  'rail.mode.average': 'Average',
+  'rail.mode.point': 'Direct',
+  'rail.detail.title': 'At this size the drawing is lost.',
+  'rail.detail.body':
+    'It is flat-shaded artwork, and in {cells} beads the features do not read. More boards and it becomes recognisable.',
   'rail.dither': 'Dithering',
   'rail.maxColors': 'Colour cap',
   'rail.maxColors.none': 'no cap',
