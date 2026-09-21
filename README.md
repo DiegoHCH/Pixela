@@ -6,10 +6,10 @@ Subes una foto, eliges **cuántas placas quieres usar**, y la app la convierte e
 patrón con tus cuentas reales: dividido por placas, con la lista de lo que hace falta
 y las coordenadas para montarlo.
 
-Estado: **andamiaje y pipeline en pie; sin interfaz todavía.** Los pasos 2 a 5
-—rejilla, cuenta más cercana en CIELAB, difuminado y tope de colores— están
-escritos como funciones puras y con tests. Las pantallas vienen después, que es
-el orden que fija el plan.
+Estado: **se puede cargar una foto, encuadrarla en placas y ver el patrón en
+vivo.** El pipeline entero —rejilla, cuenta más cercana en CIELAB, difuminado y
+tope de colores— está escrito como funciones puras y con tests. Falta el render
+grande, la lista de la compra y exportar.
 
 ---
 
@@ -19,7 +19,9 @@ el orden que fija el plan.
 |---|---|
 | `docs/plan.html` | El plan completo: alcance, pipeline, stack, fases y las decisiones con su porqué. Diez secciones, sin preguntas abiertas. |
 | `docs/sistema-de-diseno.html` | Fundamentos, biblioteca de componentes y las 22 pantallas (14 escritorio + 8 móvil), en tema día y noche. |
-| `src/lib/` | El pipeline: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `boards.ts`, `accent.ts`. Puro, sin DOM, con sus tests al lado. |
+| `src/lib/` | El pipeline: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `crop.ts`, `boards.ts`, `accent.ts` y `render.ts`. Sin DOM, con sus tests al lado. |
+| `src/state/` | Lo que sí toca el navegador: cargar el archivo, el tema y el proyecto abierto. |
+| `src/ui/` | Las pantallas. |
 | `src/lib/paleta-de-diego.json` | Los 23 colores reales de la caja, extraídos de una foto. **Es código, no documentación**, y por eso vive aquí y no en `docs/`. |
 | `src/styles/tokens.css` | Los tokens del sistema de diseño, día y noche. |
 
@@ -69,9 +71,9 @@ viajar al resto del pipeline: contar, dibujar y la lista de la compra. Por eso
 
 ## Lo que sigue
 
-1. Carga de imagen y recorte con la forma del montaje —en placas, no en píxeles.
-2. Render de cuentas sobre `<canvas>`, líneas de placa y contador.
-3. Lista de colores con cantidades, y exportar PNG.
+1. El patrón a tamaño grande en el lienzo, con las líneas de placa y el contador.
+2. Lista de colores con cantidades, y exportar PNG.
+3. La vista por tanda, con las coordenadas corridas de lado a lado.
 
 Después, la segunda mitad de la v1: ajustes de imagen, el tope de colores como
 control principal, la vista por tanda, el acento derivado, y mover el pipeline
