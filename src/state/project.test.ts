@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'vitest'
 
 import { MIDI_SQUARE } from '../lib/boards'
 import type { LoadedImage } from './load-image'
+import { inventory } from './inventory.svelte'
 import { project } from './project.svelte'
 
 /**
@@ -194,6 +195,99 @@ describe('al cambiar de proporción con el encuadre hecho', () => {
   test('sin encuadre previo, el recorte más grande que quepa', () => {
     project.open(fakeImage(1200, 800))
     expect(project.crop!.width).toBe(1200)
+  })
+})
+
+describe('las placas que tienes', () => {
+  test('se cambian cuando quieras y acotan a lo posible', () => {
+    project.setOwnedBoards(6)
+    expect(project.ownedBoards).toBe(6)
+    project.setOwnedBoards(0)
+    expect(project.ownedBoards).toBe(1)
+    project.setOwnedBoards(500)
+    expect(project.ownedBoards).toBe(99)
+    project.setOwnedBoards(2)
+  })
+
+  test('cambiarlas recalcula las tandas al momento', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(3, 2)
+    expect(project.batches).toHaveLength(3)
+
+    project.setOwnedBoards(6)
+    expect(project.batches).toHaveLength(1)
+    expect(project.fitsInOneGo).toBe(true)
+
+    project.setOwnedBoards(1)
+    expect(project.batches).toHaveLength(6)
+    project.setOwnedBoards(2)
+  })
+
+  test('el tamaño de bolsa también, y la lista lo sigue', () => {
+    project.open(fakeImage(1200, 800))
+    const con320 = project.shopping!.totalBags
+    project.setBagSize(1000)
+    expect(project.bagSize).toBe(1000)
+    expect(project.shopping!.totalBags).toBeLessThan(con320)
+    project.setBagSize(320)
+  })
+})
+
+describe('el inventario manda en los colores', () => {
+  beforeEach(() => {
+    inventory.reset()
+    project.setOnlyOwned(true)
+  })
+
+  test('arranca con los 23 colores medidos del cajón', () => {
+    expect(inventory.count).toBe(23)
+  })
+
+  test('con el filtro puesto, el patrón sólo usa lo que tienes', () => {
+    project.open(fakeImage(1200, 800))
+    // 23 marcados menos los dos metálicos, que nunca entran a cuantizar.
+    expect(project.palette).toHaveLength(21)
+    for (const { index } of project.counts) {
+      expect(inventory.has(project.palette[index].code)).toBe(true)
+    }
+  })
+
+  test('sin el filtro, usa el catálogo entero', () => {
+    project.setOnlyOwned(false)
+    project.open(fakeImage(1200, 800))
+    expect(project.palette.length).toBeGreaterThan(100)
+    project.setOnlyOwned(true)
+  })
+
+  test('desmarcar un color lo saca del patrón', () => {
+    project.open(fakeImage(1200, 800))
+    const usado = project.palette[project.counts[0].index].code
+
+    inventory.toggle(usado)
+    expect(project.palette.some((b) => b.code === usado)).toBe(false)
+    expect(project.counts.every((c) => project.palette[c.index].code !== usado)).toBe(true)
+
+    inventory.toggle(usado)
+  })
+
+  test('sin nada marcado no hay patrón, en vez de un patrón imposible', () => {
+    project.open(fakeImage(1200, 800))
+    inventory.clear()
+    expect(project.pattern).toBeNull()
+    expect(project.shopping).toBeNull()
+    inventory.reset()
+    expect(project.pattern).not.toBeNull()
+  })
+
+  test('la cantidad es opcional y se puede borrar', () => {
+    inventory.setStock('S01', 1000)
+    expect(inventory.stock('S01')).toBe(1000)
+    expect(inventory.counted).toBe(1)
+
+    inventory.setStock('S01', null)
+    expect(inventory.has('S01')).toBe(true)
+    expect(inventory.stock('S01')).toBeNull()
+    expect(inventory.counted).toBe(0)
   })
 })
 

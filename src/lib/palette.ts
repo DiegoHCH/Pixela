@@ -6,9 +6,10 @@
  * aparte: aquí sólo llega el resultado.
  */
 
-import { hexToRgb, rgbToLab } from './color'
+import { deltaE76, hexToRgb, rgbToLab } from './color'
 import type { Bead, Palette } from './types'
 
+import artkalS from './artkal-s.json'
 import paletaDeDiego from './paleta-de-diego.json'
 
 /** Una entrada tal como viene en el JSON de paleta. */
@@ -20,12 +21,32 @@ export interface PaletteEntry {
   hexSinCorregir?: string
   /** `"metalico"` marca las cuentas que la cuantización no debe usar. */
   aviso?: string
+  /**
+   * El código de fábrica más parecido, con la distancia que hay hasta él.
+   *
+   * Es para volver a comprar, no para cuantizar: el color que manda sigue
+   * siendo el medido. El fabricante declara su propia tabla «sólo de
+   * referencia», y estas cuentas además vienen medidas de una foto.
+   */
+  artkal?: {
+    code: string
+    deltaE?: number
+    /**
+     * El código se asignó por nombre y no por distancia de color. Es el caso de
+     * los metálicos: el fabricante no publica un RGB utilizable, así que no hay
+     * distancia que medir — pero el código se sabe.
+     */
+    porNombre?: boolean
+  }
 }
 
 export interface PaletteFile {
   fuente?: string
   referenciaDeBlanco?: string
   nota?: string
+  /** La marca, cuando se sabe. */
+  marca?: string
+  avisoCodigos?: string
   colores: PaletteEntry[]
 }
 
@@ -39,6 +60,13 @@ export function makeBead(entry: PaletteEntry): Bead {
     // LAB precalculado: la cuantización lo consulta millones de veces.
     lab: rgbToLab(rgb[0], rgb[1], rgb[2]),
     metallic: entry.aviso === 'metalico',
+    ...(entry.artkal
+      ? {
+          factoryCode: entry.artkal.code,
+          ...(entry.artkal.deltaE !== undefined ? { factoryDeltaE: entry.artkal.deltaE } : {}),
+          ...(entry.artkal.porNombre ? { factoryByName: true } : {}),
+        }
+      : {}),
   }
 }
 
@@ -90,4 +118,85 @@ export function quantizable(palette: Palette): Palette {
 
 export function beadByCode(palette: Palette, code: string): Bead | undefined {
   return palette.find((b) => b.code === code)
+}
+
+/** Un catálogo de fábrica: códigos y su color publicado, cuando lo publican. */
+export interface FactoryChart {
+  fuente?: string
+  aviso?: string
+  serie?: string
+  colores: Array<{ code: string; hex: string | null; aviso?: string }>
+}
+
+/**
+ * El catálogo oficial de Artkal serie S (5 mm), la marca del cajón.
+ *
+ * Está aquí para la lista de la compra y para quien sí tenga bolsas con
+ * códigos. No se usa para cuantizar: los valores son los que publica el
+ * fabricante, que además los declara «sólo de referencia», y el dorado, la
+ * plata y el cobre los deja directamente sin valor.
+ */
+export const ARTKAL_S: FactoryChart = artkalS as FactoryChart
+
+/**
+ * El catálogo entero como paleta, con **el color medido donde lo hay**.
+ *
+ * Es la síntesis de dos verdades incómodas. El catálogo es la única fuente de
+ * los códigos —lo que se puede pedir— pero sus valores de color no son de fiar:
+ * los dos documentos oficiales del fabricante se contradicen hasta en ΔE 8, y
+ * él mismo declara su tabla «sólo de referencia». Las cuentas medidas del cajón
+ * sí describen lo que vas a poner en la placa.
+ *
+ * Así que manda la medida cuando existe, y el catálogo rellena el resto
+ * marcado como aproximado.
+ */
+export function catalogPalette(
+  chart: FactoryChart = ARTKAL_S,
+  measured: Palette = DEFAULT_PALETTE,
+): Palette {
+  const porCodigo = new Map(
+    measured.filter((b) => b.factoryCode).map((b) => [b.factoryCode!, b]),
+  )
+
+  const out: Bead[] = []
+  for (const entry of chart.colores) {
+    const medido = porCodigo.get(entry.code)
+
+    if (medido) {
+      // El color es el medido; el código y el nombre, los de fábrica y los tuyos.
+      out.push({ ...medido, code: entry.code, factoryCode: entry.code })
+      continue
+    }
+    // Sin medida y sin color publicado —los metálicos— no hay nada que usar.
+    if (!entry.hex) continue
+
+    const rgb = hexToRgb(entry.hex)
+    out.push({
+      code: entry.code,
+      name: entry.code,
+      hex: entry.hex.toUpperCase(),
+      rgb,
+      lab: rgbToLab(rgb[0], rgb[1], rgb[2]),
+      metallic: entry.aviso === 'metalico',
+      factoryCode: entry.code,
+      // El color viene del catálogo, no de una cuenta real.
+      approximate: true,
+    })
+  }
+  return out
+}
+
+/** El código de fábrica más cercano de un catálogo, con su distancia. */
+export function nearestFactoryCode(
+  hex: string,
+  chart: FactoryChart = ARTKAL_S,
+): { code: string; deltaE: number } | null {
+  const lab = rgbToLab(...hexToRgb(hex))
+  let best: { code: string; deltaE: number } | null = null
+  for (const entry of chart.colores) {
+    if (!entry.hex) continue
+    const d = deltaE76(lab, rgbToLab(...hexToRgb(entry.hex)))
+    if (!best || d < best.deltaE) best = { code: entry.code, deltaE: d }
+  }
+  return best
 }

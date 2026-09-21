@@ -1,5 +1,10 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
+  import { slugify } from '../lib/export'
+  import { shortfall } from '../lib/inventory'
+  import { toCsv } from '../lib/shopping'
+  import { downloadText } from '../state/download'
+  import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
 
   /**
@@ -16,6 +21,33 @@
   const isolatedCount = $derived(
     project.isolated != null ? (used.get(project.isolated) ?? 0) : null,
   )
+  const shopping = $derived(project.shopping)
+  const bags = $derived(new Map(shopping?.rows.map((r) => [r.index, r.bags]) ?? []))
+
+  /**
+   * Lo que falta de verdad: lo que pide el patrón menos lo que tienes contado.
+   * Los colores marcados sin contar salen sin número, porque no saber cuánto
+   * tienes no es lo mismo que tener suficiente.
+   */
+  const falta = $derived(
+    new Map(
+      shortfall(
+        shopping?.rows.map((r) => ({ code: r.code, beads: r.beads })) ?? [],
+        inventory.all,
+        project.bagSize,
+      ).map((s) => [s.code, s]),
+    ),
+  )
+  const bolsasQueFaltan = $derived(
+    [...falta.values()].reduce((sum, s) => sum + (s.bags ?? 0), 0),
+  )
+  const sinContar = $derived([...falta.values()].filter((s) => s.missing === null).length)
+
+  function exportCsv() {
+    if (!shopping) return
+    const base = slugify((project.image?.name ?? '').replace(/\.[a-z0-9]{1,5}$/i, '')) || 'pixela'
+    downloadText(toCsv(shopping), `${base}-lista.csv`, 'text/csv')
+  }
 </script>
 
 <aside class="box">
@@ -47,6 +79,8 @@
 
   <div class="list">
     {#each counts as count (count.index)}
+      {@const bead = project.palette[count.index]}
+      {@const f = falta.get(bead.code)}
       <button
         type="button"
         class="row"
@@ -57,7 +91,31 @@
         <span class="bd" style:background={project.palette[count.index].hex}></span>
         <span class="cd">{project.palette[count.index].code}</span>
         <span class="nm">{project.palette[count.index].name}</span>
+        {#if project.palette[count.index].factoryCode}
+          <!--
+            El código de fábrica va con «≈» siempre, y no por prudencia
+            decorativa: el catálogo del fabricante se declara «sólo de
+            referencia», y estas cuentas están medidas de una foto. Sirve para
+            volver a comprar, no como identidad del color.
+          -->
+          <span
+            class="fc"
+            title={i18n.t('box.factory', {
+              code: project.palette[count.index].factoryCode ?? '',
+              delta: (project.palette[count.index].factoryDeltaE ?? 0).toFixed(1),
+            })}>≈{project.palette[count.index].factoryCode}</span
+          >
+        {/if}
         <span class="ct">{count.count.toLocaleString()}</span>
+        <!--
+          Las bolsas van al lado de las cuentas porque es lo que de verdad se
+          compra: 30 cuentas de rojo y 300 cuestan lo mismo, una bolsa.
+        -->
+        <span class="bg" class:short={f?.bags}>
+          {f?.bags
+            ? i18n.t('box.short', { n: f.bags })
+            : i18n.t('box.bags', { n: bags.get(count.index) ?? 0 })}
+        </span>
       </button>
     {/each}
   </div>
@@ -69,9 +127,28 @@
         {project.isolated != null ? i18n.t('box.isolatedUnit') : i18n.t('box.total')}
       </span>
     </div>
-    <p class="hint">
-      {project.isolated != null ? i18n.t('box.hint.again') : i18n.t('box.hint')}
-    </p>
+
+    {#if shopping && project.isolated == null}
+      <p class="buy">
+        {i18n.t('box.bagsTotal', { n: shopping.totalBags, size: shopping.bagSize })}
+      </p>
+      <!--
+        Con el inventario contado, lo que importa no es lo que pide el patrón
+        sino lo que te falta. Sin contar, sólo se puede avisar.
+      -->
+      <p class="buy short">
+        {bolsasQueFaltan > 0
+          ? i18n.t('box.shortTotal', { n: bolsasQueFaltan })
+          : sinContar > 0
+            ? i18n.t('box.uncountedTotal', { n: sinContar })
+            : i18n.t('box.enough')}
+      </p>
+      <button type="button" class="csv" onclick={exportCsv}>{i18n.t('box.csv')}</button>
+    {:else}
+      <p class="hint">
+        {project.isolated != null ? i18n.t('box.hint.again') : i18n.t('box.hint')}
+      </p>
+    {/if}
   </div>
 </aside>
 
@@ -153,7 +230,7 @@
   .row {
     width: 100%;
     display: grid;
-    grid-template-columns: 16px 34px 1fr auto;
+    grid-template-columns: 16px 34px 1fr auto auto auto;
     align-items: center;
     gap: 8px;
     padding: 5px 15px;
@@ -195,6 +272,13 @@
     white-space: nowrap;
   }
 
+  .fc {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
   .ct {
     font-family: var(--font-display);
     font-size: 13px;
@@ -227,6 +311,42 @@
     font-size: 11.5px;
     color: var(--ink-3);
     line-height: 1.5;
+  }
+
+  .bg {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .bg.short {
+    color: var(--warn);
+    font-weight: 600;
+  }
+
+  .buy.short {
+    margin-top: -4px;
+    color: var(--ink-3);
+  }
+
+  .buy {
+    margin: 4px 0 8px;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  .csv {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--edge);
+    color: var(--ink-2);
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+
+  .csv:hover {
+    background: var(--panel-2);
+    color: var(--ink);
   }
 
   @media (max-width: 900px) {

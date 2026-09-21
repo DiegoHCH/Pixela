@@ -9,6 +9,7 @@
   import BoardStrip from './BoardStrip.svelte'
   import CropStage from './CropStage.svelte'
   import DropZone from './DropZone.svelte'
+  import Inventory from './Inventory.svelte'
   import PatternPreview from './PatternPreview.svelte'
   import PatternStage from './PatternStage.svelte'
   import Rail from './Rail.svelte'
@@ -139,7 +140,14 @@
         >
       </div>
 
-      {#if project.phase === 'pattern'}
+      {#if project.phase === 'inventory'}
+        <button type="button" class="primary" onclick={() => project.closeInventory()}>
+          {i18n.t('bar.done')}
+        </button>
+      {:else if project.phase === 'pattern'}
+        <button type="button" class="ghost" onclick={() => project.openInventory()}>
+          {i18n.t('bar.inventory')}
+        </button>
         <button type="button" class="ghost" onclick={() => project.backToCrop()}>
           {i18n.t('bar.back')}
         </button>
@@ -181,9 +189,12 @@
   {/if}
 
   <div class="body">
-    {#if project.image}
-      <Rail />
-    {/if}
+    {#if project.phase === 'inventory'}
+      <Inventory />
+    {:else}
+      {#if project.image}
+        <Rail />
+      {/if}
 
     <main class="stage">
       <div class="stage-top">
@@ -233,9 +244,9 @@
       {/if}
     </main>
 
-    {#if project.phase === 'pattern' && project.pattern}
-      <BeadBox />
-    {:else if project.pattern}
+      {#if project.phase === 'pattern' && project.pattern}
+        <BeadBox />
+      {:else if project.pattern}
       <aside class="box">
         <div class="box-head">
           <span class="t">{i18n.t('preview.title')}</span>
@@ -247,7 +258,8 @@
           <span class="n">{project.total.toLocaleString()}</span>
           <span class="u">{i18n.t('preview.total')}</span>
         </div>
-      </aside>
+        </aside>
+      {/if}
     {/if}
   </div>
 

@@ -26,6 +26,21 @@ export interface Bead {
    * como «oliva sucio» y la plata como «gris azulado».
    */
   metallic: boolean
+  /**
+   * El código del catálogo de fábrica más parecido, para la lista de la compra.
+   * No interviene en la cuantización: ahí manda el color medido.
+   */
+  factoryCode?: string
+  /** Cuánto se aleja ese código del color medido, en ΔE. */
+  factoryDeltaE?: number
+  /** El código se sabe por el nombre, no por comparar colores. Metálicos. */
+  factoryByName?: boolean
+  /**
+   * El color sale del catálogo del fabricante y no de una cuenta medida, así
+   * que es aproximado. La interfaz lo dice; el pipeline lo usa igual, porque es
+   * lo único que hay.
+   */
+  approximate?: boolean
 }
 
 export type Palette = readonly Bead[]

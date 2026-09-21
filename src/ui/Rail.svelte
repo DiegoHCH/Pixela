@@ -1,5 +1,6 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
+  import { inventory } from '../state/inventory.svelte'
   import { project } from '../state/project.svelte'
   import BoardPicker from './BoardPicker.svelte'
 
@@ -119,6 +120,20 @@
         <input type="checkbox" checked={project.dither} onchange={() => (project.dither = !project.dither)} />
         <span>{i18n.t('rail.dither')}</span>
       </label>
+      <label class="toggle">
+        <input
+          type="checkbox"
+          checked={project.onlyOwned}
+          onchange={() => project.setOnlyOwned(!project.onlyOwned)}
+        />
+        <span>{i18n.t('rail.onlyOwned')}</span>
+      </label>
+      <button type="button" class="quiet" onclick={() => project.openInventory()}>
+        {i18n.t('bar.inventory')} · {inventory.count}
+      </button>
+      {#if project.onlyOwned && inventory.count === 0}
+        <p class="warnline">{i18n.t('rail.onlyOwned.none')}</p>
+      {/if}
       <label class="slider">
         <span class="top">
           <span>{i18n.t('rail.maxColors')}</span>
@@ -168,7 +183,45 @@
     <dl>
       <div><dt>{i18n.t('rail.cost.beads')}</dt><dd>{project.total.toLocaleString()}</dd></div>
       <div><dt>{i18n.t('rail.cost.colors')}</dt><dd>{colors}</dd></div>
+      {#if project.shopping}
+        <div>
+          <dt>{i18n.t('rail.cost.bags')}</dt>
+          <dd>{project.shopping.totalBags}</dd>
+        </div>
+      {/if}
     </dl>
+  </section>
+
+  <!--
+    Dos datos que son tuyos y no del patrón, así que se preguntan una vez y se
+    quedan: cuántas placas tienes —de eso salen las tandas— y de cuántas
+    cuentas vienen tus bolsas.
+  -->
+  <section>
+    <h3>{i18n.t('rail.yours')}</h3>
+    <div class="pair">
+      <label>
+        <span>{i18n.t('rail.yours.boards')}</span>
+        <input
+          type="number"
+          min="1"
+          max="99"
+          value={project.ownedBoards}
+          onchange={(e) => project.setOwnedBoards(e.currentTarget.valueAsNumber || 1)}
+        />
+      </label>
+      <label>
+        <span>{i18n.t('rail.yours.bag')}</span>
+        <input
+          type="number"
+          min="1"
+          max="10000"
+          step="10"
+          value={project.bagSize}
+          onchange={(e) => project.setBagSize(e.currentTarget.valueAsNumber || 1)}
+        />
+      </label>
+    </div>
   </section>
 </aside>
 
@@ -270,6 +323,32 @@
   .toggle input {
     width: auto;
     accent-color: var(--accent);
+  }
+
+  button.quiet {
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--edge);
+    color: var(--ink-2);
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+
+  button.quiet:hover {
+    background: var(--panel-2);
+    color: var(--ink);
+  }
+
+  .warnline {
+    margin: 9px 0 0;
+    padding: 8px 10px;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn);
+    border-radius: var(--radius-square);
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.5;
   }
 
   .slider {

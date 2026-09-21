@@ -14,18 +14,38 @@ import {
   suggestedSettingsFor,
   type ImageKind,
 } from '../lib/detect'
-import { DEFAULT_PALETTE } from '../lib/palette'
+import { ownedPalette } from '../lib/inventory'
+import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
 import type { SampleMode } from '../lib/sample'
+import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
 import type { Board, Palette, Pattern } from '../lib/types'
+import { inventory } from './inventory.svelte'
 import type { LoadedImage } from './load-image'
+import { readNumber, readString, writeNumber, writeString } from './storage'
+
+/** Lo que se recuerda entre sesiones: son datos tuyos, no del patrón. */
+const KEYS = {
+  boards: 'pixela:boards',
+  bag: 'pixela:bagSize',
+  onlyOwned: 'pixela:onlyOwned',
+} as const
+
+/**
+ * El catálogo entero, con el color medido donde lo hay. Se calcula una vez: son
+ * 175 conversiones a CIELAB que no cambian nunca.
+ */
+const CATALOG = catalogPalette()
 
 /** Se mide en placas por defecto; «Cuentas» es la salida para un tamaño concreto. */
 export type Measure = 'boards' | 'beads'
 
-/** Encuadrar y mirar el patrón son dos pantallas, no dos pestañas. */
-export type Phase = 'crop' | 'pattern'
+/**
+ * Encuadrar, mirar el patrón y repasar el inventario son pantallas, no
+ * pestañas. El inventario recuerda de dónde vino para volver ahí.
+ */
+export type Phase = 'crop' | 'pattern' | 'inventory'
 
 /** Lo más grande que ofrece el selector de forma del montaje. */
 export const MAX_BOARDS_X = 5
@@ -41,8 +61,13 @@ class Project {
   beadCols = $state(58)
   beadRows = $state(29)
   board = $state<Board>(MIDI_SQUARE)
-  /** Cuántas placas tienes. Es un dato tuyo, no del patrón, y se pregunta una vez. */
-  ownedBoards = $state(2)
+  /**
+   * Cuántas placas tienes. Es un dato tuyo, no del patrón: se pregunta una vez
+   * y se recuerda, como el tema. Se cambia cuando compres más.
+   */
+  ownedBoards = $state(readNumber(KEYS.boards, 2, { min: 1, max: 99 }))
+  /** Cuentas por bolsa: 320 en la tienda del cajón, 1.000 las de fábrica. */
+  bagSize = $state(readNumber(KEYS.bag, DEFAULT_BAG_SIZE, { min: 1, max: 10000 }))
   crop = $state<Rect | null>(null)
 
   sampleMode = $state<SampleMode>('average')
@@ -51,6 +76,12 @@ class Project {
 
   /** Qué clase de imagen es, mirada una sola vez al cargar. */
   imageKind = $state<ImageKind | null>(null)
+
+  /**
+   * Cuantizar sólo contra lo que tienes. Puesto por defecto: un patrón con
+   * colores que no están en la caja no se puede montar.
+   */
+  onlyOwned = $state(readString(KEYS.onlyOwned) !== 'no')
 
   /** El color aislado: apaga todos los demás en el lienzo. */
   isolated = $state<number | null>(null)
@@ -65,6 +96,8 @@ class Project {
   conversionId = $state(0)
   fallRows = $state(0)
 
+  #phaseBefore: Phase = 'crop'
+
   /** El tamaño del patrón en cuentas, venga de placas o de un tamaño a mano. */
   get grid(): { cols: number; rows: number } {
     return this.measure === 'boards'
@@ -78,13 +111,30 @@ class Project {
     return aspectOf(cols, rows)
   }
 
+  /**
+   * La paleta de trabajo: el catálogo entero, recortado a lo que tienes cuando
+   * «sólo lo que tengo» está puesto.
+   *
+   * Con el catálogo completo el patrón sale bonito y no se puede montar; con lo
+   * que tienes sale montable. Por eso el filtro viene puesto por defecto.
+   */
+  get workingPalette(): Palette {
+    return this.onlyOwned ? ownedPalette(CATALOG, inventory.all) : CATALOG
+  }
+
   #result = $derived.by(() => {
     const image = this.image
     const crop = this.crop
     if (!image || !crop) return null
+
+    const palette = this.workingPalette
+    // Sin colores marcados no hay patrón posible, y decirlo es mejor que
+    // dibujar algo con cuentas que no están en la caja.
+    if (palette.filter((b) => !b.metallic).length === 0) return null
+
     const { cols, rows } = this.grid
     const cut = cropImage(image.pixels, crop)
-    return buildPattern(cut, cols, rows, DEFAULT_PALETTE, {
+    return buildPattern(cut, cols, rows, palette, {
       mode: this.sampleMode,
       dither: this.dither,
       maxColors: this.maxColors ?? undefined,
@@ -97,12 +147,18 @@ class Project {
 
   /** La paleta con la que se cuantizó: los índices del patrón son suyos. */
   get palette(): Palette {
-    return this.#result?.palette ?? DEFAULT_PALETTE
+    return this.#result?.palette ?? this.workingPalette
   }
 
   get counts() {
     const pattern = this.pattern
     return pattern ? countBeads(pattern) : []
+  }
+
+  /** La lista de la compra: cuentas y bolsas por color. */
+  get shopping(): ShoppingList | null {
+    const pattern = this.pattern
+    return pattern ? shoppingList(pattern, this.palette, this.bagSize) : null
   }
 
   get total(): number {
@@ -185,6 +241,20 @@ class Project {
     this.conversionId++
   }
 
+  /** El inventario se abre encima y vuelve a donde estabas. */
+  openInventory(): void {
+    if (this.phase === 'inventory') return
+    this.#phaseBefore = this.phase
+    this.phase = 'inventory'
+  }
+
+  closeInventory(): void {
+    if (this.phase !== 'inventory') return
+    // Si estabas mirando un patrón y ahora no hay colores, no hay a dónde
+    // volver: el recorte sí funciona siempre.
+    this.phase = this.#phaseBefore === 'pattern' && !this.pattern ? 'crop' : this.#phaseBefore
+  }
+
   backToCrop(): void {
     this.phase = 'crop'
     this.isolated = null
@@ -202,6 +272,24 @@ class Project {
 
   selectBoard(index: number | null): void {
     this.selectedBoard = this.selectedBoard === index ? null : index
+  }
+
+  /** Cuántas placas tienes, recordado entre sesiones. */
+  setOwnedBoards(count: number): void {
+    const n = Math.max(1, Math.min(99, Math.round(count)))
+    this.ownedBoards = n
+    writeNumber(KEYS.boards, n)
+  }
+
+  setOnlyOwned(value: boolean): void {
+    this.onlyOwned = value
+    writeString(KEYS.onlyOwned, value ? 'si' : 'no')
+  }
+
+  setBagSize(size: number): void {
+    const n = Math.max(1, Math.min(10000, Math.round(size)))
+    this.bagSize = n
+    writeNumber(KEYS.bag, n)
   }
 
   /** Elegir la forma del montaje reencuadra: la proporción ha cambiado. */
