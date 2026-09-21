@@ -2,7 +2,9 @@
   import { LOCALES, i18n, type MessageKey } from '../i18n/index.svelte'
   import { accentFromHex } from '../lib/accent'
   import { formatSize } from '../lib/measure'
+  import { ProjectFileError, looksLikeProject } from '../lib/project-file'
   import { exportPatternPng } from '../state/export-png'
+  import { buildProjectFile, readProjectFile, saveProjectFile } from '../state/save-project'
   import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
   import { project } from '../state/project.svelte'
   import { applyAccent, theme } from '../state/theme.svelte'
@@ -15,28 +17,61 @@
   import PatternStage from './PatternStage.svelte'
   import Rail from './Rail.svelte'
 
-  type Failure = LoadFailure | 'export'
+  type Failure = LoadFailure | 'export' | 'project'
 
   /** Título y explicación de cada fallo, para no construir claves a mano. */
   const ERROR_KEYS = {
     type: ['error.type.title', 'error.type.body'],
     decode: ['error.decode.title', 'error.decode.body'],
     export: ['error.export.title', 'error.export.body'],
+    project: ['error.project.title', 'error.project.body'],
   } as const satisfies Record<Failure, readonly [MessageKey, MessageKey]>
 
   let input = $state<HTMLInputElement | null>(null)
   let dragging = $state(false)
   let failure = $state<Failure | null>(null)
+  /** El motivo exacto cuando un proyecto no se puede abrir. */
+  let projectError = $state<string | null>(null)
   let exporting = $state(false)
   let dragDepth = 0
 
+  /**
+   * Una sola puerta de entrada: si lo que llega es un proyecto se abre como
+   * proyecto, y si es una imagen, como imagen. Vale igual arrastrando,
+   * pegando o desde el botón.
+   */
   async function open(file: File | null) {
     if (!file) return
     failure = null
+
+    if (looksLikeProject(file)) {
+      try {
+        const { project: saved, image } = await readProjectFile(file)
+        project.restore(image, saved)
+        projectError = null
+      } catch (error) {
+        projectError = error instanceof ProjectFileError ? error.message : null
+        failure = 'project'
+      }
+      return
+    }
+
     try {
       project.open(await loadImageFile(file))
     } catch (error) {
       failure = error instanceof ImageLoadError ? error.reason : 'decode'
+    }
+  }
+
+  /** Guarda la imagen de trabajo y las decisiones, no el patrón ya calculado. */
+  function saveProject() {
+    if (!project.image) return
+    failure = null
+    try {
+      saveProjectFile(buildProjectFile(project.image, project.settings))
+    } catch {
+      projectError = null
+      failure = 'project'
     }
   }
 
@@ -156,6 +191,12 @@
         </button>
       {/if}
 
+      {#if project.image && project.phase !== 'inventory'}
+        <button type="button" class="ghost" onclick={saveProject}>
+          {i18n.t('bar.save')}
+        </button>
+      {/if}
+
       {#if project.phase === 'inventory'}
         <button type="button" class="primary" onclick={() => project.closeInventory()}>
           {i18n.t('bar.done')}
@@ -193,9 +234,16 @@
     <div class="error" role="alert">
       <div>
         <p class="et">{i18n.t(ERROR_KEYS[failure][0])}</p>
-        <p class="ed">{i18n.t(ERROR_KEYS[failure][1])}</p>
+        <p class="ed">{projectError ?? i18n.t(ERROR_KEYS[failure][1])}</p>
       </div>
-      <button type="button" class="ghost" onclick={() => (failure = null)}>
+      <button
+        type="button"
+        class="ghost"
+        onclick={() => {
+          failure = null
+          projectError = null
+        }}
+      >
         {i18n.t('error.dismiss')}
       </button>
     </div>
@@ -282,7 +330,7 @@
   <input
     bind:this={input}
     type="file"
-    accept="image/png,image/jpeg,image/gif,image/webp"
+    accept="image/png,image/jpeg,image/gif,image/webp,application/json,.json"
     hidden
     onchange={(e) => {
       void open(e.currentTarget.files?.[0] ?? null)

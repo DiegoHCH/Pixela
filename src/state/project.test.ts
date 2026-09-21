@@ -330,6 +330,64 @@ describe('el acento de la interfaz', () => {
   })
 })
 
+describe('guardar y volver a abrir', () => {
+  test('los ajustes viajan enteros en el archivo', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(3, 2)
+    project.contrast = 30
+    project.saturation = -20
+    project.dither = false
+    project.sampleMode = 'point'
+    project.renderMode = 'symbol'
+    project.maxColors = 12
+
+    const settings = project.settings
+    expect(settings.boardsX).toBe(3)
+    expect(settings.contrast).toBe(30)
+    expect(settings.sampleMode).toBe('point')
+    expect(settings.renderMode).toBe('symbol')
+    expect(settings.maxColors).toBe(12)
+    expect(settings.crop).toEqual(project.crop)
+  })
+
+  test('restaurar no vuelve a proponer ajustes encima de los tuyos', () => {
+    // `open()` propone según la imagen; `restore()` no, porque lo que trae el
+    // archivo son decisiones ya tomadas.
+    const imagen = fakeImage(1200, 800)
+    project.open(imagen)
+    const propuesto = project.dither
+
+    project.restore(imagen, {
+      pixela: 1,
+      savedAt: '2026-09-21T00:00:00.000Z',
+      name: 'guardado.png',
+      image: { width: 1200, height: 800, sourceWidth: 1200, sourceHeight: 800, dataUrl: 'data:image/png;base64,AA' },
+      crop: { x: 10, y: 20, width: 600, height: 300 },
+      measure: 'boards',
+      boardsX: 2,
+      boardsY: 1,
+      beadCols: 58,
+      beadRows: 29,
+      board: { cols: 29, rows: 29 },
+      sampleMode: 'point',
+      dither: !propuesto,
+      maxColors: 8,
+      brightness: 5,
+      contrast: 15,
+      saturation: -5,
+      renderMode: 'symbol',
+      onlyOwned: true,
+    })
+
+    expect(project.dither).toBe(!propuesto)
+    expect(project.sampleMode).toBe('point')
+    expect(project.maxColors).toBe(8)
+    expect(project.renderMode).toBe('symbol')
+    // El recorte guardado se respeta y no se reencuadra.
+    expect(project.crop).toEqual({ x: 10, y: 20, width: 600, height: 300 })
+  })
+})
+
 describe('al cerrar', () => {
   test('no queda nada del proyecto anterior', () => {
     project.open(fakeImage(600, 600))
