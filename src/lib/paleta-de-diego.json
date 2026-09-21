@@ -1,0 +1,147 @@
+{
+  "fuente": "Foto de la caja de 24 compartimentos, 21-09-2026",
+  "referenciaDeBlanco": "compartimento de cuentas blancas",
+  "nota": "Los compartimentos de mezcla se excluyeron. Dorado y Plata son metalicos: su color cambia con el angulo y un unico RGB los representa mal.",
+  "colores": [
+    {
+      "code": "C01",
+      "name": "Piel claro",
+      "hex": "#F9DAA7",
+      "hexSinCorregir": "#F8DDA5"
+    },
+    {
+      "code": "C02",
+      "name": "Rojo",
+      "hex": "#FD274A",
+      "hexSinCorregir": "#FC2849"
+    },
+    {
+      "code": "C03",
+      "name": "Gris",
+      "hex": "#9AA9AF",
+      "hexSinCorregir": "#99ACAD"
+    },
+    {
+      "code": "C04",
+      "name": "Arena",
+      "hex": "#EDCF85",
+      "hexSinCorregir": "#ECD284"
+    },
+    {
+      "code": "C05",
+      "name": "Ocre",
+      "hex": "#D9811C",
+      "hexSinCorregir": "#D8831C"
+    },
+    {
+      "code": "C06",
+      "name": "Frambuesa",
+      "hex": "#D53057",
+      "hexSinCorregir": "#D43156"
+    },
+    {
+      "code": "C07",
+      "name": "Blanco",
+      "hex": "#F4F4F4",
+      "hexSinCorregir": "#F3F8F2"
+    },
+    {
+      "code": "C08",
+      "name": "Verde oscuro",
+      "hex": "#059027",
+      "hexSinCorregir": "#059227"
+    },
+    {
+      "code": "C09",
+      "name": "Dorado",
+      "hex": "#877D47",
+      "hexSinCorregir": "#867F46",
+      "aviso": "metalico"
+    },
+    {
+      "code": "C10",
+      "name": "Gris medio",
+      "hex": "#879194",
+      "hexSinCorregir": "#869393"
+    },
+    {
+      "code": "C11",
+      "name": "Plata",
+      "hex": "#BECACE",
+      "hexSinCorregir": "#BDCDCC",
+      "aviso": "metalico"
+    },
+    {
+      "code": "C12",
+      "name": "Blanco roto",
+      "hex": "#DFE9E8",
+      "hexSinCorregir": "#DEEDE6"
+    },
+    {
+      "code": "C13",
+      "name": "Morado",
+      "hex": "#AD21CF",
+      "hexSinCorregir": "#AC21CD"
+    },
+    {
+      "code": "C14",
+      "name": "Rosa claro",
+      "hex": "#FFA7E2",
+      "hexSinCorregir": "#FEA9E0"
+    },
+    {
+      "code": "C15",
+      "name": "Negro",
+      "hex": "#19191B",
+      "hexSinCorregir": "#19191B"
+    },
+    {
+      "code": "C16",
+      "name": "Celeste",
+      "hex": "#8CDEE9",
+      "hexSinCorregir": "#8BE1E7"
+    },
+    {
+      "code": "C17",
+      "name": "Lima",
+      "hex": "#D5D504",
+      "hexSinCorregir": "#D4D804"
+    },
+    {
+      "code": "C18",
+      "name": "Fucsia",
+      "hex": "#FE3AA6",
+      "hexSinCorregir": "#FD3BA4"
+    },
+    {
+      "code": "C19",
+      "name": "Azul cielo",
+      "hex": "#02ADFF",
+      "hexSinCorregir": "#02B0FD"
+    },
+    {
+      "code": "C20",
+      "name": "Amarillo",
+      "hex": "#FCE401",
+      "hexSinCorregir": "#FBE701"
+    },
+    {
+      "code": "C21",
+      "name": "Naranja",
+      "hex": "#FFA14B",
+      "hexSinCorregir": "#FEA34A"
+    },
+    {
+      "code": "C22",
+      "name": "Azul",
+      "hex": "#0E3EC0",
+      "hexSinCorregir": "#0E3FBE"
+    },
+    {
+      "code": "C23",
+      "name": "Verde",
+      "hex": "#0FE102",
+      "hexSinCorregir": "#0FE402"
+    }
+  ]
+}

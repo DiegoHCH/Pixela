@@ -1,0 +1,96 @@
+/**
+ * Los tokens del sistema de diseño. Van desde el primer commit a propósito:
+ * si los dos temas se dejan para después, dejan de ser tokens y pasan a ser
+ * refactor.
+ *
+ * La regla que los ordena: la mesa es siempre lo más oscuro de la pantalla. De
+ * noche no se invierte nada — son los paneles los que bajan a encontrarse con
+ * la mesa, y el plástico lechoso se vuelve ahumado.
+ */
+
+:root,
+[data-theme='day'] {
+  /* La mesa de trabajo, pizarra */
+  --surface: #20282a;
+  --surface-2: #19201f;
+  --surface-3: #2b3436;
+
+  /* Los paneles, plástico lechoso frío */
+  --panel: #f1f5f4;
+  --panel-2: #e4eae8;
+  --panel-3: #d7dedb;
+  --edge: #cdd6d3;
+
+  --ink: #171d1f;
+  --ink-2: #5b6765;
+  --ink-3: #8c9794;
+  --on-dark: #e6edeb;
+  --on-dark-2: #94a2a0;
+
+  /* Reserva: en cuanto hay patrón abierto, lo pisa el acento derivado. */
+  --accent: #d93b28;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(217, 59, 40, 0.1);
+
+  --warn: #b0740f;
+  --warn-soft: rgba(176, 116, 15, 0.12);
+
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 44px -14px rgba(0, 0, 0, 0.6);
+  --shadow-app: 0 1px 3px rgba(23, 29, 31, 0.06), 0 12px 32px -12px rgba(23, 29, 31, 0.18);
+  --shadow-sheet: 0 -2px 12px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='night'] {
+  --surface: #0e1213;
+  --surface-2: #090c0d;
+  --surface-3: #1c2224;
+
+  /* Plástico ahumado */
+  --panel: #1b2223;
+  --panel-2: #151b1c;
+  --panel-3: #2a3335;
+  --edge: #2e3739;
+
+  --ink: #e4ebe9;
+  --ink-2: #9aa7a5;
+  --ink-3: #6e7b79;
+  --on-dark: #e4ebe9;
+  --on-dark-2: #8b9896;
+
+  --accent: #e8705f;
+  --accent-ink: #10191a;
+  --accent-soft: rgba(232, 112, 95, 0.14);
+
+  --warn: #e0a83c;
+  --warn-soft: rgba(224, 168, 60, 0.14);
+
+  --shadow-lift: 0 2px 6px rgba(0, 0, 0, 0.5), 0 18px 44px -14px rgba(0, 0, 0, 0.8);
+  --shadow-app: 0 1px 3px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  --shadow-sheet: 0 -2px 12px rgba(0, 0, 0, 0.5);
+}
+
+:root {
+  /**
+   * El compartimento de la caja. No cambia con el tema a propósito: si una
+   * cuenta roja cambiara de aspecto al caer la noche, la herramienta mentiría
+   * sobre lo único que le estás preguntando. De paso resuelve que una cuenta
+   * blanca sobre panel blanco desaparezca, y una negra sobre panel oscuro.
+   */
+  --well: #aeb7b5;
+  --well-edge: #8f9997;
+
+  /**
+   * El radio significa algo: las placas son cuadradas y las cuentas redondas.
+   * No existe radio intermedio en el sistema, y no hay que inventarlo.
+   */
+  --radius-square: 4px;
+  --radius-bead: 50%;
+
+  /* Las tres están en cualquier Mac: la app sigue funcionando sin conexión. */
+  --font-display: Futura, 'Century Gothic', 'URW Gothic', 'Avenir Next', sans-serif;
+  --font-body: 'Avenir Next', Avenir, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', SFMono-Regular, Menlo, ui-monospace, monospace;
+
+  /* Un solo movimiento en toda la app: las cuentas cayendo fila a fila. */
+  --fall-duration: 240ms;
+}

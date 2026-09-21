@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan — Generador de patrones para hama beads</title>
+<style>
+  :root{
+    --ink:#1b1a18;
+    --ink-2:#55504a;
+    --ink-3:#8a837a;
+    --paper:#faf8f4;
+    --card:#ffffff;
+    --line:#e6e1d8;
+    --accent:#c8442e;
+    --accent-soft:#fdf0ec;
+    --ok:#2f7d54;
+    --warn:#b07a12;
+    --warn-soft:#fdf6e6;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    font-feature-settings:"kern" 1;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:64px 28px 120px}
+
+  header.doc{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:44px}
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);font-weight:650;margin:0 0 10px
+  }
+  h1{font-size:34px;line-height:1.2;margin:0 0 12px;letter-spacing:-.02em;font-weight:680}
+  .sub{color:var(--ink-2);font-size:17px;margin:0;max-width:60ch}
+  .meta{margin-top:18px;font-size:13px;color:var(--ink-3)}
+
+  h2{
+    font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:650;
+    color:var(--ink-3);margin:56px 0 18px;padding-bottom:8px;border-bottom:1px solid var(--line)
+  }
+  h3{font-size:19px;margin:32px 0 8px;letter-spacing:-.01em;font-weight:650}
+  h4{font-size:15px;margin:22px 0 6px;font-weight:650}
+  p{margin:0 0 14px;max-width:68ch}
+  ul,ol{margin:0 0 14px;padding-left:22px;max-width:66ch}
+  li{margin:0 0 7px}
+  strong{font-weight:650}
+  code{
+    font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:#f1ede5;padding:1px 5px;border-radius:4px;color:#3d3833
+  }
+  .code-block{
+    font:12.5px/1.75 ui-monospace,SFMono-Regular,Menlo,monospace;
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
+    padding:16px 18px;margin:18px 0 24px;color:var(--ink-2);
+    white-space:pre;overflow-x:auto
+  }
+  a{color:var(--accent)}
+
+  .lede{font-size:17px;color:var(--ink-2)}
+
+  /* Decisión destacada */
+  .decision{
+    background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:10px;padding:20px 22px;margin:22px 0
+  }
+  .decision .label{
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+    font-weight:650;margin-bottom:6px
+  }
+  .decision p:last-child{margin-bottom:0}
+
+  .note{
+    background:var(--warn-soft);border:1px solid #f0e2bf;border-radius:10px;
+    padding:18px 20px;margin:22px 0
+  }
+  .note .label{
+    font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--warn);
+    font-weight:650;margin-bottom:6px
+  }
+  .note p:last-child{margin-bottom:0}
+
+  /* Pipeline */
+  .pipe{
+    display:flex;flex-direction:column;gap:0;margin:26px 0;
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)
+  }
+  .step{display:flex;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:0}
+  .step .n{
+    flex:0 0 26px;height:26px;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent);font-size:12px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:2px
+  }
+  .step .body{flex:1;min-width:0}
+  .step .t{font-weight:650;font-size:15px;margin-bottom:3px}
+  .step .d{font-size:14px;color:var(--ink-2);line-height:1.55}
+  .step .d em{color:var(--accent);font-style:normal;font-weight:600}
+
+  /* Tablas */
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14.5px}
+  th{
+    text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-3);font-weight:650;padding:0 12px 8px 0;border-bottom:1px solid var(--line)
+  }
+  td{padding:11px 12px 11px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+  td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+  tr:last-child td{border-bottom:0}
+
+  /* Fases */
+  .phase{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;margin:0 0 14px
+  }
+  .phase-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+  .phase-head .tag{
+    font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    color:#fff;background:var(--ink);padding:3px 8px;border-radius:5px
+  }
+  .phase-head .tag.v2{background:var(--ink-3)}
+  .phase-head .name{font-weight:650;font-size:16px}
+  .phase ul{margin-bottom:0}
+  .phase p{font-size:14.5px;color:var(--ink-2)}
+
+  /* Preguntas */
+  .q{border-left:2px solid var(--line);padding:2px 0 2px 18px;margin:0 0 22px}
+  .q .ask{font-weight:650;margin-bottom:4px}
+  .q .why{font-size:14.5px;color:var(--ink-2);margin:0}
+  .q .why b{color:var(--ink);font-weight:600}
+
+  .out{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px}
+  .out span{
+    font-size:13px;background:var(--card);border:1px solid var(--line);
+    border-radius:20px;padding:5px 13px;color:var(--ink-2)
+  }
+
+  footer.doc{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--ink-3)}
+
+  @media print{
+    body{background:#fff}
+    .wrap{padding:0;max-width:none}
+    .phase,.decision,.note,.pipe{break-inside:avoid}
+    h2{break-after:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">Plan de trabajo</p>
+  <h1>Generador de patrones para hama beads</h1>
+  <p class="sub">Subes una imagen, eliges el tamaño en cuentas y obtienes el patrón listo para montar: dividido por paneles, con la lista de cuentas que hay que comprar.</p>
+  <p class="meta">20 de septiembre de 2026 · Borrador para revisar antes de construir</p>
+</header>
+
+<p class="lede">Este documento fija <strong>qué vamos a construir, con qué decisiones técnicas y en qué orden</strong>. No hay código todavía. La sección 9 recoge las respuestas a las preguntas de alcance y lo que cambió cada una. Todas cerradas.</p>
+
+<h2>1 · Qué hace y qué no</h2>
+
+<h4>Hace</h4>
+<ul>
+  <li>Acepta una imagen (arrastrar, elegir archivo o pegar del portapapeles).</li>
+  <li><strong>Recorta y encuadra</strong> antes de convertir, <strong>midiendo en placas</strong>: eliges cuántas quieres y la imagen se ajusta a ellas.</li>
+  <li>La convierte en una rejilla de cuentas del tamaño que tú decidas.</li>
+  <li><strong>Captura tu paleta con una foto de tus propias cuentas</strong>, y reduce los colores a ésa — no a colores inventados ni al catálogo de una marca que quizá no sea la tuya.</li>
+  <li>Dibuja el resultado como cuentas de verdad (con su agujero), no como píxeles cuadrados.</li>
+  <li>Superpone la <strong>división por paneles</strong> y te dice cuántos necesitas.</li>
+  <li>Cuenta cuántas cuentas de cada color hacen falta.</li>
+  <li>Exporta: imagen del patrón, hoja por panel, lista de compra, versión imprimible.</li>
+</ul>
+
+<h4>No hace (al menos no en la primera versión)</h4>
+<ul>
+  <li>No quita fondos automáticamente — eso lo traes ya resuelto.</li>
+  <li>No guarda proyectos en la nube ni tiene cuentas de usuario.</li>
+  <li>No pide precios ni compra las cuentas por ti.</li>
+</ul>
+
+<h2>2 · La decisión de plataforma</h2>
+
+<div class="decision">
+  <div class="label">Decisión</div>
+  <p><strong>Aplicación web instalable (PWA), sin servidor.</strong></p>
+  <p>Svelte + Vite + TypeScript, con la cuantización en un Web&nbsp;Worker. Se instala como app en el Mac y en el teléfono, funciona sin conexión y se imprime desde el propio navegador.</p>
+</div>
+
+<p>El razonamiento de fondo: todo el trabajo real es manipular píxeles con <code>&lt;canvas&gt;</code>, y eso ocurre entero dentro del navegador. La imagen nunca sale de tu máquina. Empaquetarlo en Electron o Tauri añadiría unos 100&nbsp;MB a cambio de casi nada — el navegador ya sabe abrir archivos, descargar e imprimir.</p>
+
+<div class="note">
+  <div class="label">Cambio respecto al borrador anterior</div>
+  <p>Este plan decía antes <em>«un único archivo HTML, sin build»</em>. Se cambia a PWA a propósito: pierdes el doble clic desde el Finder, pero ganas <strong>instalable en el teléfono</strong> — y la mitad de las pantallas del sistema de diseño son de móvil, así que esa premisa ya no se sostenía. El service worker da el mismo «funciona sin conexión» que prometía el archivo suelto, y además de verdad en ambos dispositivos.</p>
+</div>
+
+<h4>Por qué el framework es la decisión menos importante</h4>
+<p>Pixela es un <code>&lt;canvas&gt;</code> y unos cuarenta controles. No hay rutas, ni backend, ni listas largas, ni datos remotos: el DOM es diminuto y casi nunca cambia. React existe para diferenciar árboles grandes de forma eficiente, y aquí no hay árbol grande que diferenciar — pagarías su peso sin cobrar su beneficio.</p>
+
+<p><strong>Svelte</strong> se compila y desaparece, así que no hay runtime que cargar antes de que la app arranque, y sus derivaciones reactivas calcan el pipeline de la sección 3: imagen → rejilla → cuantizado → conteos. <strong>TypeScript</strong> porque el pipeline es todo índices y arrays numéricos, y confundir <code>cols</code> con <code>rows</code> es un error que no se ve: produce colores sutilmente equivocados en vez de fallar.</p>
+
+<h4>Lo que sí decide si la app se siente bien</h4>
+<div class="decision">
+  <div class="label">La decisión de arquitectura</div>
+  <p><strong>La cuantización va en un Web Worker, no en el hilo principal.</strong></p>
+  <p>Un patrón de 200 × 200 contra 60 colores, con difuminado, son millones de conversiones a CIELAB. Si eso corre en el hilo principal mientras arrastras el deslizante de contraste, la app se congela y parece rota — y arrastrar deslizantes es literalmente lo que se hace todo el rato.</p>
+</div>
+
+<p>De ahí salen tres reglas de implementación: rejillas en <code>Int16Array</code> y <code>Float32Array</code> (no arrays de objetos), resultados obsoletos descartados mientras sigues arrastrando, y redibujado atado a <code>requestAnimationFrame</code>.</p>
+
+<h4>El resto del stack</h4>
+<table class="spec">
+  <tr><th>Pieza</th><th>Elección</th><th>Por qué</th></tr>
+  <tr><td>Estilos</td><td>CSS plano con variables</td><td>El sistema de diseño ya <em>es</em> una hoja de tokens. Tailwind pelearía contra él.</td></tr>
+  <tr><td>Canvas</td><td>API 2D, sin librería</td><td>Dibujamos rectángulos y arcos. Konva o PixiJS sobran.</td></tr>
+  <tr><td>Persistencia</td><td><code>localStorage</code></td><td>Inventario, paleta y tema. IndexedDB es desproporcionado.</td></tr>
+  <tr><td>PDF e impresión</td><td>Hoja de estilos de impresión</td><td>Cero dependencias. jsPDF sólo si el control fino no alcanza.</td></tr>
+  <tr><td>Offline</td><td><code>vite-plugin-pwa</code></td><td>Service worker e instalación, sin escribirlo a mano.</td></tr>
+  <tr><td>Pruebas</td><td>Vitest sobre las funciones puras</td><td>Ver abajo.</td></tr>
+  <tr><td>Despliegue</td><td>Estático en cualquier CDN</td><td>Netlify, Vercel, Cloudflare o Pages. No hay nada que servir.</td></tr>
+</table>
+
+<p>Sobre las pruebas: <code>rgbToLab</code>, <code>nearestBead</code> y <code>characteristicBead</code> son puras y deterministas, y un error ahí <strong>no se ve</strong> — no rompe nada, sólo devuelve colores un poco equivocados para siempre. Son las únicas que merecen test unitario de verdad; la interfaz no.</p>
+
+<h4>Estructura</h4>
+<p>Las carpetas calcan los seis pasos de la sección 3, para que cada paso del plan tenga un sitio evidente donde vivir:</p>
+
+<div class="code-block">src/
+  lib/
+    color.ts       sRGB ↔ CIELAB ↔ HSL, distancia perceptual
+    palette.ts     paleta por defecto, parser y validador
+    sample.ts      paso 2 — imagen a rejilla (promedio / directo)
+    quantize.ts    pasos 3–5 — cuenta más cercana, difuminado, tope
+    boards.ts      división en placas y subpatrones
+    accent.ts      color característico → acento por tema
+    render.ts      paso 6 — cuentas, símbolos, impresión
+  worker/
+    pipeline.worker.ts
+  ui/              componentes Svelte
+  state/           los cuarenta controles</div>
+
+<h4>Lo que descarté</h4>
+<ul>
+  <li><strong>Flutter Web.</strong> Es lo natural viniendo de Flutter, y es la herramienta equivocada aquí: el bundle ronda los megabytes, arrastrar-y-soltar archivos es incómodo, y el texto no se renderiza como texto del navegador. Para una herramienta de imagen que debe abrir rápido, pesa demasiado — aunque sea la que mejor conoces.</li>
+  <li><strong>Next.js.</strong> Un framework de servidor para una app sin servidor.</li>
+  <li><strong>Vanilla puro.</strong> Defendible, y los mockups lo demuestran. Pero los mockups son <em>estáticos</em>; con cuarenta controles interdependientes y estado real se convierte en spaghetti, que es justo donde Svelte gana.</li>
+  <li><strong>Electron y Tauri.</strong> Si algún día quieres icono en el Dock, una PWA ya se instala. Y si aun así hiciera falta, envolverla es una tarde — empezar por ahí ralentiza todo desde el primer día.</li>
+</ul>
+
+<h2>3 · Cómo funciona por dentro</h2>
+
+<p>Este es el corazón del asunto, y donde se decide si el patrón queda bonito o queda barro. Seis pasos:</p>
+
+<div class="pipe">
+  <div class="step">
+    <div class="n">1</div>
+    <div class="body">
+      <div class="t">Cargar y ajustar</div>
+      <div class="d">La imagen entra a un canvas a resolución completa. Controles de <em>brillo, contraste y saturación</em> antes de nada: las cuentas tienen colores muy saturados y planos, así que subir un poco el contraste casi siempre mejora el resultado.</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">2</div>
+    <div class="body">
+      <div class="t">Reducir a la rejilla</div>
+      <div class="d">Cada cuenta es una celda. Dos modos, porque no sirve el mismo para todo: <em>promedio por bloque</em> para fotos y dibujos (suaviza y conserva el detalle), <em>muestreo directo</em> para pixel art (respeta los píxeles originales sin emborronarlos). Elegir mal aquí es el error más común. <strong>Por defecto: promedio</strong>, y el modo se propone solo al cargar según la imagen.</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">3</div>
+    <div class="body">
+      <div class="t">Buscar el color más parecido</div>
+      <div class="d">Para cada celda, la cuenta más cercana de la paleta. Clave: la comparación se hace en <em>espacio CIELAB</em>, no en RGB. La distancia en RGB no se parece a cómo vemos — dos colores igual de lejos en RGB pueden ser indistinguibles o chocantes. En LAB la distancia sí se corresponde con la percepción, y la diferencia en el patrón final es muy visible.</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">4</div>
+    <div class="body">
+      <div class="t">Difuminado (opcional)</div>
+      <div class="d"><em>Floyd–Steinberg</em>: reparte el error de cada celda entre sus vecinas para simular colores intermedios. Salva los degradados en fotos. Destroza el pixel art. <strong>Por defecto: activado</strong>, y se apaga solo si la imagen entra como pixel art.</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">5</div>
+    <div class="body">
+      <div class="t">Limitar el número de colores</div>
+      <div class="d">Un patrón puede usar 40 colores distintos, y entonces tienes que comprar 40 bolsas. Un tope de colores (<em>«usa como máximo 12»</em>) se queda con los más frecuentes y reasigna el resto. Es una restricción de bolsillo, no estética, pero cambia mucho qué se puede construir de verdad.</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="n">6</div>
+    <div class="body">
+      <div class="t">Dibujar</div>
+      <div class="d">Cada celda se pinta como una cuenta con su agujero. Encima, la rejilla y las <em>líneas de panel</em>. Modo alternativo de <em>símbolos</em>: una letra por color, para imprimir en blanco y negro sin gastar tinta.</div>
+    </div>
+  </div>
+</div>
+
+<h2>4 · Los paneles</h2>
+
+<p>Es la parte que pediste explícitamente y la que convierte esto de un filtro bonito en una herramienta útil: un patrón de 100×100 no cabe en ninguna placa, hay que partirlo.</p>
+
+<table>
+  <tr><th>Placa</th><th>Medida</th><th>Nota</th></tr>
+  <tr><td>Cuadrada midi</td><td>29 × 29 pins</td><td>La estándar, la que casi todo el mundo tiene</td></tr>
+  <tr><td>Grande midi</td><td>57 × 57 pins</td><td>Menos juntas visibles en piezas grandes</td></tr>
+  <tr><td>Personalizada</td><td>la que escribas</td><td>Para otras marcas o placas raras</td></tr>
+</table>
+
+<p>Con eso la app calcula y muestra:</p>
+<ul>
+  <li>Cuántas placas hacen falta, en filas × columnas (ej. <em>6 placas: 2 × 3</em>).</li>
+  <li>Las líneas de corte superpuestas sobre el patrón completo.</li>
+  <li>Una <strong>vista por placa</strong>: seleccionas una y la ves ampliada y sola, con coordenadas, que es como se monta en la práctica.</li>
+</ul>
+
+<p>Detalle que importa al montar: la última placa de cada fila y columna casi nunca sale completa. La vista por placa tiene que mostrar los huecos vacíos claramente, no recortar.</p>
+
+<h2>5 · Lo que sale por el otro lado</h2>
+
+<div class="out">
+  <span>Patrón completo en pantalla</span>
+  <span>PNG del patrón</span>
+  <span>Hoja por placa</span>
+  <span>Lista de colores con cantidades</span>
+  <span>Bolsas necesarias por color</span>
+  <span>CSV de la lista</span>
+  <span>Modo símbolos para B/N</span>
+  <span>Vista imprimible</span>
+</div>
+
+<h2>6 · La paleta sale de tu cajón</h2>
+
+<p>Esta sección decía antes que el punto delicado del proyecto era no tener verificados los valores RGB oficiales de Hama. Ese riesgo <strong>desapareció</strong>, y por un motivo que no esperaba: las cuentas del cajón no tienen marca ni códigos.</p>
+
+<div class="decision">
+  <div class="label">Decisión</div>
+  <p><strong>La paleta se captura fotografiando tus propias cuentas.</strong></p>
+  <p>No hace falta el catálogo oficial de nadie. Hacen falta los colores que tienes, y esos están en el cajón.</p>
+</div>
+
+<p>Resulta que es <em>mejor</em> que partir de una paleta de fábrica, no un apaño. Las cuentas reales se decoloran con el sol, varían de un lote a otro y casi nunca coinciden con el color que el fabricante publica. Una foto de tus cuentas describe lo que vas a poner sobre la placa; un catálogo describe lo que salió de una fábrica danesa hace cinco años.</p>
+
+<h4>Cómo funciona</h4>
+<ol>
+  <li>Extiendes unas cuantas cuentas de cada color <strong>sobre un folio blanco</strong> y haces una foto.</li>
+  <li>La app usa el blanco del folio como <strong>referencia para corregir la dominante</strong> de la luz — sin eso, una foto bajo bombilla cálida daría colores sistemáticamente anaranjados.</li>
+  <li>Agrupa los colores que encuentra y te los propone. Tocas para confirmar, descartar o añadir.</li>
+  <li>Les pones nombre si quieres — <em>«el rojo»</em>, <em>«el azul oscuro»</em> — o los deja numerados.</li>
+</ol>
+
+<div class="note">
+  <div class="label">Por qué la precisión absoluta importa menos de lo que parece</div>
+  <p>Una foto nunca captura el color exacto, y eso podría sonar descalificante para todo el paso 3. No lo es: la app compara <b>tu imagen contra tus cuentas</b>, y lo que decide qué cuenta gana no es el valor absoluto de cada una, sino la <b>distancia relativa entre ellas</b>. Si la foto desvía todos los colores en la misma dirección, el orden de cercanía apenas se mueve. La corrección de blanco se encarga de que la desviación sea efectivamente la misma para todos.</p>
+</div>
+
+<h4>Lo que esto simplifica</h4>
+<ul>
+  <li><strong>La paleta y el inventario se funden en una sola cosa.</strong> Eran dos pantallas: una para definir los colores disponibles y otra para marcar cuáles tienes. Si la paleta sale de tu cajón, ya <em>es</em> tu inventario. Una función menos y un concepto menos que explicar.</li>
+  <li><strong>Los códigos dejan de ser de fábrica.</strong> H01 y H05 no significan nada cuando las cuentas vienen sueltas. Se generan y se pueden renombrar. La regla de accesibilidad se mantiene igual: cada color sigue llevando una etiqueta junto a la muestra, sólo que ahora la etiqueta es tuya.</li>
+  <li><strong>La lista de la compra muestra colores, no códigos.</strong> Si vuelves a comprar mirando fotos en una tienda, un código de una marca que no sabemos cuál es no te sirve de nada.</li>
+</ul>
+
+<h4>Ya está hecha</h4>
+<p>El 21 de septiembre se extrajo la paleta real de una foto de la caja: <strong>23 colores</strong>, guardados en <code>pixela-paleta-de-diego.json</code> y ya cargados en todas las pantallas del sistema de diseño. La caja tiene 24 compartimentos, pero uno es de mezcla — sobras de muchos colores — y se excluyó: no es un color.</p>
+
+<div class="note">
+  <div class="label">La corrección de blanco funcionó sin folio</div>
+  <p>La foto no tenía folio de referencia, pero <b>el compartimento de cuentas blancas sirvió igual</b>: si de verdad son blancas, sus tres canales deberían valer lo mismo. Salieron en rgb(243, 248, 242), o sea una desviación máxima del <b>1,48 %</b> — prácticamente nada. La luz era neutra y los colores son fiables.</p>
+  <p>Eso valida de paso el método del paso 2 de esta sección, y sugiere una mejora: si hay cuentas blancas en la foto, <b>sirven de referencia y el folio se vuelve opcional</b>.</p>
+</div>
+
+<div class="note">
+  <div class="label">Dos colores que el algoritmo no va a tratar bien</div>
+  <p><b>Dorado y plata son metálicos</b>, y su color cambia con el ángulo desde el que los miras. Un único valor RGB no los representa: el dorado salió <code>#877D47</code>, un oliva apagado que no se parece al brillo que tienen en la mano.</p>
+  <p>No tiene arreglo perfecto — el problema está en el material, no en el código. Lo razonable es <b>marcarlos como metálicos y excluirlos de la cuantización automática</b>, dejando que se coloquen a mano donde se quieran. Si no, el algoritmo los usará como «verde oliva sucio» y «gris azulado», que es justo lo que no son.</p>
+</div>
+
+<h4>Lo que se conserva</h4>
+<p>Siguen viniendo <strong>paletas de fábrica cargadas</strong> — Hama, Perler, Artkal, Nabbi — como punto de partida para quien sí tenga las bolsas con códigos, y el bloque JSON editable sigue existiendo como salida de emergencia. Pero dejan de ser el camino principal, y <strong>sus valores se siguen declarando aproximados en la interfaz</strong>, porque siguen sin estar verificados.</p>
+
+<h2>7 · Sistema de diseño</h2>
+
+<p>Resuelto aparte y completo, en <strong>Pixela — Sistema de diseño</strong> (<code>pixela-sistema-diseno.html</code>, misma carpeta): fundamentos, biblioteca de componentes con sus estados, <strong>doce pantallas de escritorio y ocho de móvil</strong>, y las reglas de adaptación entre ambos. Todo en los dos temas, con conmutador. Las pantallas no son dibujos: ejecutan la cuantización real, así que las cuentas que se ven ahí salieron del pipeline de la sección 3.</p>
+
+<p>La app se llama <strong>Pixela</strong>, con la bajada <em>de imagen a patrón</em>. El nombre dice la transformación entera: un píxel que se vuelve cuenta. Se escribe sin tilde a propósito — así se lee llana, <em>pi-XE-la</em>, y no esdrújula como «píxel».</p>
+
+<p>El resumen, para que este documento se sostenga solo:</p>
+
+<h4>La postura</h4>
+<p>La identidad sale del material, no de una tendencia: la placa es plástico translúcido mate, las cuentas son plástico brillante y saturado. El chrome de la app es lo mate — paneles blanco lechoso frío sobre una mesa de trabajo pizarra — y la única saturación de la pantalla es la de tu patrón, que es lo único que hay que juzgar con el ojo.</p>
+
+<h4>La apuesta</h4>
+<p><strong>La app no tiene color de marca.</strong> El acento se calcula del color dominante del patrón abierto: montas una seta roja y la interfaz se pone roja; cambias a un pez turquesa y se vuelve turquesa. Se conserva tu tono siempre, pero luminosidad y saturación se fuerzan a una banda que garantiza contraste AA. Es media hora de código y es la identidad entera.</p>
+
+<h4>Día y noche</h4>
+<p>La app ya era oscura y clara a la vez — mesa pizarra, paneles lechosos — así que el modo noche no puede ser una inversión: dejaría los paneles claros flotando sobre una mesa clara, sin jerarquía y sin sitio donde juzgar color. La regla que lo resuelve es una sola: <strong>la mesa es siempre lo más oscuro de la pantalla.</strong> De noche no se invierte nada; son los paneles los que bajan a encontrarse con la mesa, y el plástico lechoso se vuelve plástico ahumado.</p>
+<p>Por defecto sigue al sistema, con conmutador manual que se recuerda. La impresión siempre usa el tema día.</p>
+
+<h4>Móvil</h4>
+<p><strong>Las tres columnas del escritorio son las tres pestañas del móvil</strong> — Ajustes, Cuentas y Placas. Mismo contenido, mismos nombres, redistribuido en una hoja inferior de dos alturas; la mesa nunca desaparece. Y la idea escala al tamaño intermedio como una sola columna lateral con esas mismas pestañas, así que hay un único concepto para los tres anchos en vez de tres maquetas sueltas.</p>
+
+<h4>Las reglas que se heredan al construir</h4>
+<ul>
+  <li><strong>El radio significa algo:</strong> las placas son cuadradas y las cuentas redondas, así que todo lo cuadrado es estructura (4&nbsp;px) y todo lo redondo representa una cuenta (círculo). No existe radio intermedio en el sistema.</li>
+  <li><strong>El color de una cuenta no depende del tema:</strong> los compartimentos de la caja son del mismo gris neutro en día y en noche, y cada muestra lleva un anillo de ese gris. Si una cuenta roja cambiara de aspecto al caer la noche, la herramienta mentiría sobre lo único que le estás preguntando. De paso resuelve que una cuenta blanca sobre panel blanco desaparece, y una negra sobre panel oscuro también.</li>
+  <li><strong>Tipografía:</strong> Futura para títulos y cifras — su <em>O</em> es la forma de una cuenta vista desde arriba —, Avenir Next para lo funcional, mono para los códigos. Las tres están en cualquier Mac, así que el archivo sigue funcionando sin conexión.</li>
+  <li><strong>Un solo movimiento:</strong> al procesar una imagen, las cuentas caen en su sitio escalonadas fila a fila (240&nbsp;ms). Nada más se anima, porque esperar transiciones mientras ajustas un control es irritante.</li>
+  <li><strong>El color nunca va solo:</strong> cada cuenta lleva su código junto a la muestra, y existe el modo de símbolos.</li>
+</ul>
+
+<h4>Tres piezas que el mockup añade a la v1</h4>
+<ul>
+  <li>La <strong>tira de placas</strong> bajo el lienzo — un mapa en miniatura con la forma real del montaje — sustituye al desplegable para elegir placa.</li>
+  <li>La <strong>caja de compartimentos</strong>: la paleta se ve como tu caja de cuentas real, con los colores que no tienes rayados y apagados.</li>
+  <li>El <strong>acento derivado</strong>, con una banda de contraste distinta para cada tema: en día empuja hacia abajo para aguantar sobre el plástico lechoso, en noche hacia arriba para aguantar sobre el ahumado.</li>
+  <li>Los <strong>dos temas</strong>. Salen casi gratis si las variables se montan desde el primer día; si se dejan para después, es refactor.</li>
+</ul>
+
+<h2>8 · En qué orden lo construimos</h2>
+
+<div class="phase">
+  <div class="phase-head"><span class="tag">v1</span><span class="name">Que funcione de punta a punta</span></div>
+  <p>Al terminar ya puedes sacar un patrón real y montarlo.</p>
+  <ul>
+    <li>Andamiaje: Vite + Svelte + TypeScript, tokens del sistema de diseño como variables CSS desde el primer commit</li>
+    <li>El pipeline en <code>lib/</code> como funciones puras, con sus tests — antes de tocar la interfaz</li>
+    <li>Carga de imagen + <strong>recorte con proporción fija y ajuste a placas enteras</strong></li>
+    <li>Rejilla ajustable + relación de aspecto bloqueada</li>
+    <li><strong>Captura de paleta desde una foto</strong> — con corrección de blanco sobre folio. Va aquí y no después: sin ella la app no sirve para un cajón sin marcas, que es el caso real</li>
+    <li>Cuantización en LAB contra esa paleta</li>
+    <li>Render de cuentas + líneas de placa + contador de placas</li>
+    <li>Lista de colores con cantidades</li>
+    <li>Exportar PNG</li>
+  </ul>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="tag">v1</span><span class="name">Que quede bien</span></div>
+  <ul>
+    <li>Ajustes de brillo / contraste / saturación</li>
+    <li>Difuminado Floyd–Steinberg conmutable, activado por defecto</li>
+    <li><strong>Tope de colores</strong> — con fotos es el control principal, no un extra</li>
+    <li>Detección del tipo de imagen al cargar, con el modo siempre visible y corregible</li>
+    <li>Aviso de patrón grande, que con fotos es la situación normal</li>
+    <li>Transparencia = sin cuenta (para sprites con fondo transparente)</li>
+    <li>Vista por placa con coordenadas, desde la tira de placas</li>
+    <li>Caja de compartimentos con estado de inventario por color</li>
+    <li>Acento derivado del color dominante</li>
+    <li>Modo símbolos, CSV e impresión</li>
+    <li><strong>El pipeline movido al Web Worker</strong>, con descarte de resultados obsoletos</li>
+    <li><strong>PWA</strong>: manifiesto, iconos, service worker e instalación</li>
+  </ul>
+  <p style="margin-top:12px;font-size:13.5px">El worker se deja para esta fase a propósito: con patrones pequeños el hilo principal aguanta, y mover el pipeline antes de que el pipeline esté cerrado es trabajo que se hace dos veces. Pero no puede saltarse — es lo que separa una demo de una herramienta.</p>
+</div>
+
+<div class="phase">
+  <div class="phase-head"><span class="tag v2">v2</span><span class="name">Si resulta que lo usas</span></div>
+  <ul>
+    <li>Editor manual: tocar cuentas sueltas después de generar, que siempre hay cuatro píxeles que arreglar a mano</li>
+    <li>Guardar y reabrir proyectos (archivo <code>.json</code> local)</li>
+    <li>Varias paletas guardadas — el cajón de casa, la caja del trabajo, la de un amigo</li>
+    <li>Comparar dos configuraciones lado a lado</li>
+    <li>Envolverlo en Tauri si quieres el icono en el Dock</li>
+  </ul>
+</div>
+
+<h2>9 · Respuestas, y qué cambian</h2>
+
+<p>Contestadas el 20 de septiembre de 2026. Dos siguen abiertas al final.</p>
+
+<div class="q">
+  <div class="ask">1. Fotos e imágenes sobre todo, aunque también pixel art</div>
+  <p class="why">Era la asunción contraria, así que <b>los valores por defecto se invierten</b>: promedio por bloque y difuminado activado. Y como es «de las dos», el modo se propone solo al cargar —contando colores únicos y buscando estructura de bloques— pero queda siempre visible y cambiable en un gesto. Un modo automático que no se puede corregir es peor que no tenerlo.</p>
+</div>
+
+<div class="note">
+  <div class="label">La consecuencia que no era obvia</div>
+  <p><strong>Las fotos necesitan rejillas mucho más grandes.</strong> Un sprite se lee a 44 cuentas de ancho; una cara no. Un retrato reconocible pide entre 80 y 120, y eso arrastra todo lo demás:</p>
+  <p>120 de ancho son <strong>cinco placas en horizontal y unas quince en total</strong> — no cuatro. Son <strong>más de 10.000 cuentas</strong>, o sea unas diez bolsas y dinero de verdad. Y el aviso de «patrón demasiado grande» deja de ser un caso raro para ser la situación normal.</p>
+  <p>De ahí salen tres cosas: el <b>tope de colores</b> pasa de extra a control principal (una foto sin tope se va a veinte y pico colores), la <b>tira de placas</b> tiene que funcionar con quince celdas y no con cuatro, y el <b>Web Worker</b> deja de ser optimización para ser requisito.</p>
+</div>
+
+<div class="q">
+  <div class="ask">2. Midi de 5 mm · placas de 29 × 29, contadas</div>
+  <p class="why">Confirmado sobre las placas reales, no asumido: <b>29 pines por lado</b>, o sea 841 por placa. Coincide con el valor que ya estaba por defecto, así que nada que cambiar.</p>
+  <p class="why" style="margin-top:8px">Pero hay un dato de la misma foto que sí cambia cosas: <b>sólo hay dos placas</b>. Entre las dos caben 1.682 cuentas, y un patrón de foto ronda las 10.000 — o sea <b>seis rondas de montar, planchar y desmoldar</b>. Ver la pregunta C.</p>
+</div>
+
+<div class="q">
+  <div class="ask">3. Compradas en «Señor Hama» — marca sin confirmar</div>
+  <p class="why">No pude localizar esa tienda. Y hay un detalle que importa: en el mundo hispanohablante <b>«hama beads» se usa como nombre genérico</b>, igual que «kleenex», y buena parte de las tiendas que se llaman así venden <b>Perler o Artkal</b>, no Hama. O sea que el nombre de la tienda no dice la marca. Queda pendiente mirar la bolsa.</p>
+</div>
+
+<div class="q">
+  <div class="ask">4. Mirando la pantalla, probablemente</div>
+  <p class="why">El zoom cómodo mantiene la prioridad y el modo símbolos baja, pero no se cae: sigue siendo lo que hace la app usable para quien no distingue rojo de verde. Con fotos hay una tensión que anoto: veinte colores parecidos hacen la leyenda de símbolos difícil de seguir, justo cuando imprimir se vuelve más necesario porque no puedes memorizar 10.000 cuentas.</p>
+</div>
+
+<div class="q">
+  <div class="ask">5. Un poco de cada</div>
+  <p class="why">El inventario se queda donde estaba, en la segunda mitad de la v1. Sin cambios.</p>
+</div>
+
+<h3>Preguntas surgidas y ya cerradas</h3>
+
+<div class="q">
+  <div class="ask">A. ¿Recortar y encuadrar dentro de la app? — <b>sí, en la v1, midiendo en placas</b></div>
+  <p class="why">Entró porque con fotos casi siempre hay que recortar, y volver a Vista Previa entre intentos rompe el ciclo de probar y ajustar. Pero la forma correcta no era la primera que diseñé.</p>
+</div>
+
+<div class="note">
+  <div class="label">La placa es la entrada, no el resultado</div>
+  <p>Mi primer diseño te dejaba recortar libre y <em>después</em> te decía cuántas placas costaba, con un botón para cuadrar a placas enteras. Está al revés. Cuando tienes dos placas sobre la mesa, la pregunta no es «¿cuánto me va a costar esto?» sino <strong>«¿qué cabe en lo que tengo?»</strong>.</p>
+  <p>Así que se invierte: <strong>eliges la forma del montaje —1&nbsp;×&nbsp;1, 2&nbsp;×&nbsp;1, 3&nbsp;×&nbsp;2— y la imagen se ajusta a ella</strong>. Dos placas en horizontal son 58&nbsp;×&nbsp;29 cuentas, y el recorte se fija a 2:1 solo.</p>
+  <p>Y arrastra dos simplificaciones que no había visto:</p>
+</div>
+
+<ul>
+  <li><strong>La proporción del recorte y la forma del montaje eran el mismo control.</strong> Tenía un selector de proporciones (1:1, 4:3, 3:4) y aparte un cálculo de placas. Son la misma cosa dicha dos veces: si eliges 2&nbsp;×&nbsp;1 placas, la proporción <em>es</em> 2:1. Un control menos.</li>
+  <li><strong>El botón de «cuadrar a placas enteras» desaparece.</strong> No hace falta cuadrar nada si nunca sales de placas enteras. Una función menos, y de las que había que explicar.</li>
+</ul>
+
+<p>Queda un <strong>modo «Cuentas»</strong> como salida, para cuando quieras un tamaño concreto sin importar las placas — un llavero de 40&nbsp;×&nbsp;40, por ejemplo. Pero el modo por defecto es por placas.</p>
+
+<div class="q">
+  <div class="ask">C. ¿Mapa o cola de trabajo? — <b>ninguna de las dos: una tanda</b></div>
+  <p class="why">La pregunta estaba mal planteada, y se vio al resolver la A. Con el recorte medido en placas, si eliges dos y tienes dos, <b>no hay cola que hacer</b>: es una sola tanda. La cola sólo aparece cuando el patrón no cabe en lo que tienes. Así que la tira no elige bando — <b>es un mapa, y se vuelve cola sola cuando hace falta</b>.</p>
+</div>
+
+<div class="decision">
+  <div class="label">Lo que apareció al pensarlo desde la mesa</div>
+  <p><strong>Con dos placas no montas una y luego la otra: montas las dos encajadas y planchas de una vez.</strong></p>
+  <p>Así que la unidad de trabajo no es la placa, es la <strong>tanda</strong>: lo que cabe a la vez en las placas que tienes. La pantalla de montar enseña las dos juntas con las coordenadas corridas de lado a lado, y una línea marcando dónde acaba una placa y empieza la otra.</p>
+  <p>No es un detalle de interfaz. Planchar dos placas encajadas da <strong>una sola pieza</strong>, con una junta menos que pegar después. Enseñar una placa sola te habría hecho trabajar de más.</p>
+</div>
+
+<p>De ahí salen tres cosas que ya están en la pantalla D08:</p>
+<ul>
+  <li><strong>Las tandas se agrupan por adyacencia</strong>, no en orden de lectura, para que lo planchado salga contiguo.</li>
+  <li><strong>El aviso de desmoldar.</strong> La tanda siguiente necesita las mismas placas físicas, así que hay que planchar y liberar antes de continuar. La app lo dice donde toca — al terminar, no al empezar.</li>
+  <li><strong>La app necesita saber cuántas placas tienes.</strong> Es un dato del usuario, no del patrón, y se pregunta una vez.</li>
+</ul>
+
+<div class="q">
+  <div class="ask">B. ¿Qué marca son tus cuentas? — <b>resuelta</b></div>
+  <p class="why">Ninguna: un cajón con cuentas sueltas de varios colores, sin bolsas ni códigos. Lejos de ser un problema, <b>disuelve el riesgo que esta sección 6 llevaba abierta desde el principio</b>: si la paleta se captura fotografiando tus cuentas, deja de importar que yo no tenga los valores oficiales de Hama verificados. Ver la sección 6, reescrita entera.</p>
+</div>
+
+<h2>10 · Dónde vivirá</h2>
+
+<p>Un repositorio propio — <code>pixela</code> — fuera de <code>~/documentos/work/</code>, que es donde viven los documentos y no el código. Los dos documentos de este proyecto (este plan y el sistema de diseño) sí se quedan ahí: son para mirar, no para compilar.</p>
+
+<p>En desarrollo, <code>npm run dev</code>. En producción, los estáticos de <code>dist/</code> en cualquier CDN. Al visitarla una vez queda instalable y disponible sin conexión, en el Mac y en el teléfono.</p>
+
+<footer class="doc">
+  Plan sujeto a tus respuestas de la sección 9. Nada construido todavía salvo los mockups.
+</footer>
+
+</div>
+</body>
+</html>
