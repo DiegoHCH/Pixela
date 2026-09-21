@@ -1,6 +1,7 @@
 <script lang="ts">
   import { LOCALES, i18n, type MessageKey } from '../i18n/index.svelte'
   import { accentFromHex } from '../lib/accent'
+  import { formatSize } from '../lib/measure'
   import { exportPatternPng } from '../state/export-png'
   import { ImageLoadError, loadImageFile, pickImageFile, type LoadFailure } from '../state/load-image'
   import { project } from '../state/project.svelte'
@@ -236,6 +237,9 @@
           {/if}
           <span aria-hidden="true">·</span>
           <span class="k">{i18n.t('stage.colors', { n: project.counts.length })}</span>
+          <!-- Lo que mide colgado, que es lo que pregunta quien lo enmarca. -->
+          <span aria-hidden="true">·</span>
+          <span class="k">{formatSize(project.size)}</span>
         {:else if project.image}
           <span>{i18n.t('stage.crop')}</span>
           <span class="k">{i18n.t('stage.shape', { x: project.boardsX, y: project.boardsY })}</span>
