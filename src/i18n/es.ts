@@ -7,6 +7,7 @@ export default {
   'bar.cancel': 'Cancelar',
   'bar.convert': 'Convertir a patrón',
   'bar.back': 'Volver al recorte',
+  'bar.name': 'Nombre del patrón',
   'bar.noFile': 'Sin patrón',
   'bar.inventory': 'Mis cuentas',
   'bar.done': 'Listo',

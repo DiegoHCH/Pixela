@@ -19,12 +19,13 @@ import type { LoadedImage } from './load-image'
 /** Arma el archivo a partir de lo que hay abierto. */
 export function buildProjectFile(
   image: LoadedImage,
+  name: string,
   settings: Omit<ProjectFile, 'pixela' | 'savedAt' | 'name' | 'image'>,
 ): ProjectFile {
   return {
     pixela: PROJECT_FILE_VERSION,
     savedAt: new Date().toISOString(),
-    name: image.name,
+    name,
     image: {
       width: image.width,
       height: image.height,

@@ -48,6 +48,11 @@ export interface ProjectFile {
   saturation: number
   renderMode: 'color' | 'symbol'
   onlyOwned: boolean
+  /**
+   * En qué pantalla estabas. Sin esto, reabrir un proyecto ya convertido te
+   * devolvía al recorte y había que convertir otra vez.
+   */
+  phase: 'crop' | 'pattern'
 }
 
 function asNumber(value: unknown, field: string): number {
@@ -127,6 +132,9 @@ export function parseProjectFile(input: unknown): ProjectFile {
     saturation: clampInt(raw.saturation, -100, 100, 0),
     renderMode: raw.renderMode === 'symbol' ? 'symbol' : 'color',
     onlyOwned: raw.onlyOwned !== false,
+    // Los archivos guardados antes de que esto existiera abren en el recorte,
+    // que es de donde venían.
+    phase: raw.phase === 'pattern' ? 'pattern' : 'crop',
   }
 }
 

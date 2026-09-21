@@ -377,6 +377,7 @@ describe('guardar y volver a abrir', () => {
       saturation: -5,
       renderMode: 'symbol',
       onlyOwned: true,
+      phase: 'crop',
     })
 
     expect(project.dither).toBe(!propuesto)
@@ -385,6 +386,37 @@ describe('guardar y volver a abrir', () => {
     expect(project.renderMode).toBe('symbol')
     // El recorte guardado se respeta y no se reencuadra.
     expect(project.crop).toEqual({ x: 10, y: 20, width: 600, height: 300 })
+    // Guardado desde el recorte, se abre en el recorte.
+    expect(project.phase).toBe('crop')
+    // Y el nombre es el del proyecto, no el del archivo que arrastraste.
+    expect(project.name).toBe('guardado')
+  })
+
+  test('un proyecto guardado convertido vuelve al patrón', () => {
+    const imagen = fakeImage(1200, 800)
+    project.open(imagen)
+    project.convert()
+    const guardado = { ...project.settings, pixela: 1 as const, savedAt: '', name: 'amy',
+      image: { width: 1200, height: 800, sourceWidth: 1200, sourceHeight: 800, dataUrl: 'data:image/png;base64,AA' } }
+    expect(guardado.phase).toBe('pattern')
+
+    project.close()
+    project.open(imagen)
+    expect(project.phase).toBe('crop')
+
+    project.restore(imagen, guardado)
+    // Lo que se guardó terminado se abre terminado: convertirlo otra vez a mano
+    // era el paso de más que sobraba.
+    expect(project.phase).toBe('pattern')
+    expect(project.pattern).not.toBeNull()
+  })
+
+  test('el nombre se cambia y no se queda vacío', () => {
+    project.open(fakeImage(600, 600))
+    project.setName('  Nami en el Sunny  ')
+    expect(project.name).toBe('Nami en el Sunny')
+    project.setName('   ')
+    expect(project.name).toBe('prueba')
   })
 })
 

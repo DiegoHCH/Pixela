@@ -45,7 +45,7 @@
 
   function exportCsv() {
     if (!shopping) return
-    const base = slugify((project.image?.name ?? '').replace(/\.[a-z0-9]{1,5}$/i, '')) || 'pixela'
+    const base = slugify(project.name) || 'pixela'
     downloadText(toCsv(shopping), `${base}-lista.csv`, 'text/csv')
   }
 </script>

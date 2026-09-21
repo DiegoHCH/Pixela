@@ -68,7 +68,7 @@
     if (!project.image) return
     failure = null
     try {
-      saveProjectFile(buildProjectFile(project.image, project.settings))
+      saveProjectFile(buildProjectFile(project.image, project.name, project.settings))
     } catch {
       projectError = null
       failure = 'project'
@@ -107,7 +107,7 @@
     try {
       const single = project.selectedBoard != null
       await exportPatternPng(pattern, project.palette, {
-        source: project.image.name,
+        source: project.name,
         board: single ? undefined : project.board,
         boardNumber: single ? project.selectedBoard! + 1 : undefined,
         only: project.isolated,
@@ -153,7 +153,24 @@
   <header class="bar">
     <div class="brand">
       <span class="name">{i18n.t('app.name')}</span>
-      <span class="file">{project.image?.name ?? i18n.t('bar.noFile')}</span>
+      {#if project.image}
+        <!--
+          El nombre del patrón se escribe aquí, donde antes sólo se leía el del
+          archivo: es lo que va a llamarse el PNG que exportes y el proyecto que
+          guardes, así que se cambia donde se ve.
+        -->
+        <input
+          class="file title"
+          type="text"
+          value={project.name}
+          aria-label={i18n.t('bar.name')}
+          placeholder={i18n.t('bar.name')}
+          onchange={(e) => project.setName(e.currentTarget.value)}
+          onblur={(e) => (e.currentTarget.value = project.name)}
+        />
+      {:else}
+        <span class="file">{i18n.t('bar.noFile')}</span>
+      {/if}
     </div>
 
     <div class="actions">
@@ -385,6 +402,32 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /*
+    Se lee como el texto que era y se edita como un campo: el recuadro aparece
+    al pasar por encima, para no meter una caja de formulario en la cabecera.
+  */
+  input.title {
+    width: 22ch;
+    max-width: 34vw;
+    padding: 3px 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-square);
+    font: inherit;
+    font-size: 12.5px;
+  }
+
+  input.title:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  input.title:focus {
+    outline: none;
+    background: var(--surface-3);
+    border-color: var(--accent);
+    color: var(--on-dark);
   }
 
   .actions {

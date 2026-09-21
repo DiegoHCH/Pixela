@@ -80,6 +80,14 @@ describe('parseProjectFile', () => {
     expect(p.renderMode).toBe('color')
     expect(p.onlyOwned).toBe(true)
     expect(p.name).toBe('proyecto')
+    // Un archivo de antes de que se guardara la pantalla abre en el recorte,
+    // que es donde abrían todos.
+    expect(p.phase).toBe('crop')
+  })
+
+  it('recuerda que lo guardaste ya convertido', () => {
+    expect(parseProjectFile({ ...valido, phase: 'pattern' }).phase).toBe('pattern')
+    expect(parseProjectFile({ ...valido, phase: 'inventory' }).phase).toBe('crop')
   })
 
   it('un error de proyecto se reconoce por su tipo', () => {

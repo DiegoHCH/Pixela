@@ -57,8 +57,23 @@ export type Phase = 'crop' | 'pattern' | 'inventory'
 export const MAX_BOARDS_X = 5
 export const MAX_BOARDS_Y = 4
 
+/**
+ * El nombre del archivo sin la extensión: el punto de partida del título.
+ *
+ * Quita sólo extensiones de imagen y no «lo que haya tras el último punto»,
+ * porque un patrón puede llamarse «Nami v1.2» y ese «.2» es parte del nombre.
+ */
+function titleFrom(fileName: string): string {
+  return fileName.replace(/\.(png|jpe?g|gif|webp)$/i, '').trim() || 'patrón'
+}
+
 class Project {
   image = $state<LoadedImage | null>(null)
+  /**
+   * Cómo se llama esto. Sale del archivo que abriste, y lo cambias cuando
+   * quieras: es lo que nombra el PNG que exportas y el proyecto que guardas.
+   */
+  name = $state('')
   /** En qué pantalla estás: encuadrando, o mirando el patrón. */
   phase = $state<Phase>('crop')
   measure = $state<Measure>('boards')
@@ -274,6 +289,7 @@ class Project {
    */
   open(image: LoadedImage): void {
     this.image = image
+    this.name = titleFrom(image.name)
     this.phase = 'crop'
     this.isolated = null
     this.selectedBoard = null
@@ -294,6 +310,7 @@ class Project {
 
   close(): void {
     this.image = null
+    this.name = ''
     this.crop = null
     this.phase = 'crop'
     this.isolated = null
@@ -320,6 +337,9 @@ class Project {
       saturation: this.saturation,
       renderMode: this.renderMode,
       onlyOwned: this.onlyOwned,
+      // El inventario no entra, pero la pantalla sí: es parte de dónde lo
+      // dejaste, no de lo que tienes en el cajón.
+      phase: this.phase === 'pattern' ? ('pattern' as const) : ('crop' as const),
     }
   }
 
@@ -331,6 +351,7 @@ class Project {
    */
   restore(image: LoadedImage, file: ProjectFile): void {
     this.image = image
+    this.name = titleFrom(file.name || image.name)
     this.phase = 'crop'
     this.isolated = null
     this.selectedBoard = null
@@ -354,7 +375,11 @@ class Project {
     // El recorte va al final: los ajustes de arriba cambian la proporción, y
     // ponerlo antes lo dejaría reencuadrado por `refitCrop`.
     this.crop = clampToImage(file.crop, image.width, image.height)
-    this.refreshAccent()
+
+    // Y si lo guardaste convertido, vuelve convertido: reabrir un proyecto
+    // terminado no debería obligarte a convertirlo otra vez.
+    if (file.phase === 'pattern') this.convert()
+    else this.refreshAccent()
   }
 
   /** Vuelve a mirar de qué color es el patrón. Sólo en momentos concretos. */
@@ -430,6 +455,12 @@ class Project {
     const value = Math.max(1, Math.min(20, Math.round(mm * 100) / 100))
     this.pitchMm = value
     writeNumber(KEYS.pitch, value)
+  }
+
+  /** Sin nombre no se queda: vuelve al del archivo, o a algo. */
+  setName(value: string): void {
+    const clean = value.trim().slice(0, 80)
+    this.name = clean || (this.image ? titleFrom(this.image.name) : '')
   }
 
   setBagSize(size: number): void {
