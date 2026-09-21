@@ -168,7 +168,47 @@
     <dl>
       <div><dt>{i18n.t('rail.cost.beads')}</dt><dd>{project.total.toLocaleString()}</dd></div>
       <div><dt>{i18n.t('rail.cost.colors')}</dt><dd>{colors}</dd></div>
+      {#if project.shopping}
+        <div>
+          <dt>{i18n.t('rail.cost.bags')}</dt>
+          <dd>{project.shopping.totalBags}</dd>
+        </div>
+      {/if}
     </dl>
+  </section>
+
+  <!--
+    Dos datos que son tuyos y no del patrón, así que se preguntan una vez y se
+    quedan: cuántas placas tienes —de eso salen las tandas— y de cuántas
+    cuentas vienen tus bolsas.
+  -->
+  <section>
+    <h3>{i18n.t('rail.yours')}</h3>
+    <div class="pair">
+      <label>
+        <span>{i18n.t('rail.yours.boards')}</span>
+        <input
+          type="number"
+          min="1"
+          max="99"
+          value={project.ownedBoards}
+          onchange={(e) =>
+            (project.ownedBoards = Math.max(1, Math.round(e.currentTarget.valueAsNumber || 1)))}
+        />
+      </label>
+      <label>
+        <span>{i18n.t('rail.yours.bag')}</span>
+        <input
+          type="number"
+          min="1"
+          max="10000"
+          step="10"
+          value={project.bagSize}
+          onchange={(e) =>
+            (project.bagSize = Math.max(1, Math.round(e.currentTarget.valueAsNumber || 1)))}
+        />
+      </label>
+    </div>
   </section>
 </aside>
 

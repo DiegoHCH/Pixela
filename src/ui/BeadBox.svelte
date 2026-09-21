@@ -1,5 +1,8 @@
 <script lang="ts">
   import { i18n } from '../i18n/index.svelte'
+  import { slugify } from '../lib/export'
+  import { toCsv } from '../lib/shopping'
+  import { downloadText } from '../state/download'
   import { project } from '../state/project.svelte'
 
   /**
@@ -16,6 +19,14 @@
   const isolatedCount = $derived(
     project.isolated != null ? (used.get(project.isolated) ?? 0) : null,
   )
+  const shopping = $derived(project.shopping)
+  const bags = $derived(new Map(shopping?.rows.map((r) => [r.index, r.bags]) ?? []))
+
+  function exportCsv() {
+    if (!shopping) return
+    const base = slugify((project.image?.name ?? '').replace(/\.[a-z0-9]{1,5}$/i, '')) || 'pixela'
+    downloadText(toCsv(shopping), `${base}-lista.csv`, 'text/csv')
+  }
 </script>
 
 <aside class="box">
@@ -73,6 +84,11 @@
           >
         {/if}
         <span class="ct">{count.count.toLocaleString()}</span>
+        <!--
+          Las bolsas van al lado de las cuentas porque es lo que de verdad se
+          compra: 30 cuentas de rojo y 300 cuestan lo mismo, una bolsa.
+        -->
+        <span class="bg">{i18n.t('box.bags', { n: bags.get(count.index) ?? 0 })}</span>
       </button>
     {/each}
   </div>
@@ -84,9 +100,17 @@
         {project.isolated != null ? i18n.t('box.isolatedUnit') : i18n.t('box.total')}
       </span>
     </div>
-    <p class="hint">
-      {project.isolated != null ? i18n.t('box.hint.again') : i18n.t('box.hint')}
-    </p>
+
+    {#if shopping && project.isolated == null}
+      <p class="buy">
+        {i18n.t('box.bagsTotal', { n: shopping.totalBags, size: shopping.bagSize })}
+      </p>
+      <button type="button" class="csv" onclick={exportCsv}>{i18n.t('box.csv')}</button>
+    {:else}
+      <p class="hint">
+        {project.isolated != null ? i18n.t('box.hint.again') : i18n.t('box.hint')}
+      </p>
+    {/if}
   </div>
 </aside>
 
@@ -168,7 +192,7 @@
   .row {
     width: 100%;
     display: grid;
-    grid-template-columns: 16px 34px 1fr auto auto;
+    grid-template-columns: 16px 34px 1fr auto auto auto;
     align-items: center;
     gap: 8px;
     padding: 5px 15px;
@@ -249,6 +273,32 @@
     font-size: 11.5px;
     color: var(--ink-3);
     line-height: 1.5;
+  }
+
+  .bg {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .buy {
+    margin: 4px 0 8px;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+
+  .csv {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--edge);
+    color: var(--ink-2);
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+
+  .csv:hover {
+    background: var(--panel-2);
+    color: var(--ink);
   }
 
   @media (max-width: 900px) {

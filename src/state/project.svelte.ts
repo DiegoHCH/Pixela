@@ -18,6 +18,7 @@ import { DEFAULT_PALETTE } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
 import type { SampleMode } from '../lib/sample'
+import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
 import type { Board, Palette, Pattern } from '../lib/types'
 import type { LoadedImage } from './load-image'
 
@@ -43,6 +44,8 @@ class Project {
   board = $state<Board>(MIDI_SQUARE)
   /** Cuántas placas tienes. Es un dato tuyo, no del patrón, y se pregunta una vez. */
   ownedBoards = $state(2)
+  /** Cuentas por bolsa: 320 en la tienda del cajón, 1.000 las de fábrica. */
+  bagSize = $state(DEFAULT_BAG_SIZE)
   crop = $state<Rect | null>(null)
 
   sampleMode = $state<SampleMode>('average')
@@ -103,6 +106,12 @@ class Project {
   get counts() {
     const pattern = this.pattern
     return pattern ? countBeads(pattern) : []
+  }
+
+  /** La lista de la compra: cuentas y bolsas por color. */
+  get shopping(): ShoppingList | null {
+    const pattern = this.pattern
+    return pattern ? shoppingList(pattern, this.palette, this.bagSize) : null
   }
 
   get total(): number {

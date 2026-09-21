@@ -9,6 +9,7 @@
 import { EXPORT_CELL_SIZE, exportFileName } from '../lib/export'
 import { drawPattern } from '../lib/render'
 import type { Board, Palette, Pattern } from '../lib/types'
+import { downloadBlob } from './download'
 
 export interface ExportOptions {
   /** Nombre del archivo de origen, para nombrar la salida. */
@@ -58,7 +59,7 @@ export async function exportPatternPng(
     rows: pattern.rows,
     board: options.boardNumber,
   })
-  download(blob, name)
+  downloadBlob(blob, name)
   return name
 }
 
@@ -69,20 +70,4 @@ function toBlob(canvas: HTMLCanvasElement): Promise<Blob> {
       else reject(new ExportError('No se pudo generar el PNG.'))
     }, 'image/png')
   })
-}
-
-/**
- * La descarga del navegador, sin servidor por medio: el archivo se arma aquí y
- * no viaja a ninguna parte.
- */
-function download(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  // Se revoca en el siguiente turno: revocarlo ya cancelaría la descarga.
-  setTimeout(() => URL.revokeObjectURL(url), 0)
 }

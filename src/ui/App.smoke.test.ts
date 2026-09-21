@@ -105,6 +105,8 @@ test('con una imagen abierta llega hasta el patrón', async () => {
 
   expect(target.textContent).toContain('Caja de cuentas')
   expect(target.textContent).toContain('Placas')
+  expect(target.textContent).toContain('Lista de la compra')
+  expect(target.textContent).toMatch(/\d+ bolsas de \d+ cuentas/)
   // El patrón tiene cuentas de verdad contadas, no un cero de relleno.
   expect(project.total).toBe(58 * 29)
   expect(target.textContent).toContain(project.total.toLocaleString())
