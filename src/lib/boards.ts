@@ -88,25 +88,38 @@ export function batchSlice(pattern: Pattern, batch: Batch, board: Board): Patter
  * La forma de la tanda: qué rectángulo de placas se monta de una vez con las
  * que tienes.
  *
- * Se queda con el rectángulo de más área que quepa en el inventario, y ante
- * empate elige el que más se parece a la forma del montaje — con dos placas y
- * un patrón apaisado, 2 × 1 y no 1 × 2.
+ * El criterio es **cuántas veces hay que planchar**, no qué rectángulo queda
+ * más bonito: se elige la forma que menos tandas produce al cubrir el montaje.
+ * Con 3 × 2 placas y dos en la mano, ponerlas en vertical da tres tandas
+ * llenas y ponerlas en horizontal da cuatro, una de ellas a medias.
+ *
+ * A igualdad de tandas gana la que aprovecha más placas, y después la que se
+ * parece a la forma del montaje.
  */
 export function batchShape(layout: BoardLayout, owned: number): { cols: number; rows: number } {
   if (owned < 1) throw new Error('Hace falta al menos una placa.')
   const target = layout.cols / layout.rows
 
   let best = { cols: 1, rows: 1 }
+  let bestRounds = Infinity
   let bestArea = 0
   let bestGap = Infinity
 
   for (let c = 1; c <= Math.min(owned, layout.cols); c++) {
     const r = Math.min(Math.floor(owned / c), layout.rows)
     if (r < 1) continue
+    const rounds = Math.ceil(layout.cols / c) * Math.ceil(layout.rows / r)
     const area = c * r
     const gap = Math.abs(c / r - target)
-    if (area > bestArea || (area === bestArea && gap < bestGap)) {
+
+    const mejor =
+      rounds < bestRounds ||
+      (rounds === bestRounds && area > bestArea) ||
+      (rounds === bestRounds && area === bestArea && gap < bestGap)
+
+    if (mejor) {
       best = { cols: c, rows: r }
+      bestRounds = rounds
       bestArea = area
       bestGap = gap
     }

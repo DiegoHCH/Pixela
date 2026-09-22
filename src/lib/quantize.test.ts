@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { deltaE76, rgbToLab } from './color'
 import { DEFAULT_PALETTE, quantizable } from './palette'
 import { capColors, countBeads, nearestBead, quantize, totalBeads } from './quantize'
 import type { CellGrid, Pattern } from './types'
@@ -90,6 +91,27 @@ describe('difuminado', () => {
     const rojo = DEFAULT_PALETTE[1]
     const pattern = quantize(flat(rojo.rgb, 8, 8), PAL, { dither: true })
     expect(distinct(pattern).size).toBe(1)
+  })
+
+  it('promedia al color que se le pidió', () => {
+    // Lo que define el difuminado: colocar cuentas distintas cuya media se
+    // parezca al color pedido. Aquí se comprueba sobre un azul plano que no
+    // está en el cajón — la media tiene que caer cerca, aunque ninguna cuenta
+    // suelta lo sea.
+    const pedido: readonly [number, number, number] = [60, 90, 170]
+    const pattern = quantize(flat(pedido, 24, 24), PAL, { dither: true })
+
+    let r = 0
+    let g = 0
+    let b = 0
+    for (const v of pattern.cells) {
+      r += PAL[v].rgb[0]
+      g += PAL[v].rgb[1]
+      b += PAL[v].rgb[2]
+    }
+    const n = pattern.cells.length
+    const media = rgbToLab(r / n, g / n, b / n)
+    expect(deltaE76(media, rgbToLab(...pedido))).toBeLessThan(15)
   })
 
   it('es determinista', () => {

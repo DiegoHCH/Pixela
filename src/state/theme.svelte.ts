@@ -6,6 +6,7 @@
 
 import { ACCENT_INK, FALLBACK_ACCENT } from '../lib/accent'
 import type { Theme } from '../lib/types'
+import { readString, removeKey, writeString } from './storage'
 
 const KEY = 'pixela:theme'
 
@@ -15,8 +16,7 @@ function systemTheme(): Theme {
 }
 
 function stored(): Theme | null {
-  if (typeof localStorage === 'undefined') return null
-  const v = localStorage.getItem(KEY)
+  const v = readString(KEY)
   return v === 'day' || v === 'night' ? v : null
 }
 
@@ -35,7 +35,7 @@ class ThemeState {
 
   set(theme: Theme): void {
     this.#manual = theme
-    localStorage?.setItem(KEY, theme)
+    writeString(KEY, theme)
     apply(theme)
   }
 
@@ -46,7 +46,7 @@ class ThemeState {
   /** Vuelve a seguir al sistema. */
   clear(): void {
     this.#manual = null
-    localStorage?.removeItem(KEY)
+    removeKey(KEY)
     apply(this.current)
   }
 

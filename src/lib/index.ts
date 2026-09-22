@@ -4,22 +4,27 @@
  */
 
 export * from './accent'
+export * from './adjust'
 export * from './boards'
 export * from './color'
+export * from './fidelity'
 export * from './palette'
 export * from './quantize'
 export * from './sample'
 export * from './types'
 
+import { adjustGrid, NEUTRAL, type Adjustments } from './adjust'
 import { quantizable } from './palette'
 import { quantize, type QuantizeOptions } from './quantize'
 import { sample, type SampleMode } from './sample'
-import type { Palette, Pattern, RgbaImage } from './types'
+import type { CellGrid, Palette, Pattern, RgbaImage } from './types'
 
 export interface BuildPatternOptions extends QuantizeOptions {
   mode?: SampleMode
   /** Por defecto se excluyen los metálicos: un RGB no los representa. */
   includeMetallic?: boolean
+  /** Brillo, contraste y saturación antes de buscar las cuentas. */
+  adjustments?: Adjustments
 }
 
 /**
@@ -32,9 +37,13 @@ export function buildPattern(
   rows: number,
   palette: Palette,
   options: BuildPatternOptions = {},
-): { pattern: Pattern; palette: Palette } {
-  const { mode, includeMetallic = false, ...quantizeOptions } = options
+): { pattern: Pattern; palette: Palette; grid: CellGrid } {
+  const { mode, includeMetallic = false, adjustments = NEUTRAL, ...quantizeOptions } = options
   const used = includeMetallic ? palette : quantizable(palette)
-  const grid = sample(img, cols, rows, mode)
-  return { pattern: quantize(grid, used, quantizeOptions), palette: used }
+  // Muestrear y después ajustar: mismo resultado y mil veces más barato que
+  // ajustar la imagen entera. El porqué está en `adjust.ts`.
+  const grid = adjustGrid(sample(img, cols, rows, mode), adjustments)
+  // La rejilla sale con el resultado porque medir el parecido la necesita, y
+  // recalcularla sólo para eso sería repetir el paso más caro.
+  return { pattern: quantize(grid, used, quantizeOptions), palette: used, grid }
 }

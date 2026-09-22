@@ -3,6 +3,7 @@
  * añadir un idioma después obliga a recorrer todas las pantallas otra vez.
  */
 
+import { readString, writeString } from '../state/storage'
 import en from './en'
 import es from './es'
 
@@ -14,10 +15,8 @@ const DICTS: Record<Locale, Record<MessageKey, string>> = { es, en }
 const KEY = 'pixela:locale'
 
 function initial(): Locale {
-  if (typeof localStorage !== 'undefined') {
-    const saved = localStorage.getItem(KEY)
-    if (saved === 'es' || saved === 'en') return saved
-  }
+  const saved = readString(KEY)
+  if (saved === 'es' || saved === 'en') return saved
   if (typeof navigator !== 'undefined' && navigator.language.startsWith('en')) return 'en'
   return 'es'
 }
@@ -31,13 +30,20 @@ class I18nState {
 
   set(locale: Locale): void {
     this.#locale = locale
-    localStorage?.setItem(KEY, locale)
+    writeString(KEY, locale)
     document.documentElement.lang = locale
   }
 
-  /** Devuelve la clave si falta la traducción: se ve el hueco, no se esconde. */
-  t(key: MessageKey): string {
-    return DICTS[this.#locale][key] ?? es[key] ?? key
+  /**
+   * El texto de una clave, con los valores metidos en sus huecos `{así}`.
+   * Si falta la traducción devuelve la clave: el hueco se ve, no se esconde.
+   */
+  t(key: MessageKey, values?: Record<string, string | number>): string {
+    const raw = DICTS[this.#locale][key] ?? es[key] ?? key
+    if (!values) return raw
+    return raw.replace(/\{(\w+)\}/g, (match, name: string) =>
+      name in values ? String(values[name]) : match,
+    )
   }
 }
 
