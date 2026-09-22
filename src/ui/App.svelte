@@ -141,12 +141,16 @@
     failure = null
     try {
       const single = project.selectedBoard != null
+      const origin = project.selectedBoardOrigin
       await exportPatternPng(pattern, project.palette, {
         source: project.name,
         board: single ? undefined : project.board,
         boardNumber: single ? project.selectedBoard! + 1 : undefined,
         only: project.isolated,
         mode: project.renderMode,
+        // La hoja de una placa sale numerada como en el montaje; el patrón
+        // completo no, que a ese tamaño de celda los números no se leen.
+        coords: single && origin ? { colOffset: origin.col, rowOffset: origin.row } : undefined,
       })
     } catch {
       failure = 'export'

@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { drawPattern, fitCellSize, minCellFor } from '../lib/render'
+  import {
+    MAX_COORD_GUTTER,
+    MIN_CELL_FOR_COORDS,
+    coordGutter,
+    drawCoordinates,
+    drawPattern,
+    fitCellSize,
+    minCellFor,
+  } from '../lib/render'
   import { project } from '../state/project.svelte'
   import { theme } from '../state/theme.svelte'
 
@@ -15,6 +23,12 @@
   /** Si hay una placa señalada se ve ella sola, con sus huecos. */
   const shown = $derived(project.selectedBoardPattern ?? project.pattern)
   const whole = $derived(project.selectedBoard == null)
+  /**
+   * Las coordenadas van en la placa suelta y no en el montaje completo: ahí las
+   * celdas caen a seis píxeles y los números serían una mancha. La placa sola
+   * es además la vista con la que se monta, que es para lo que sirven.
+   */
+  const origin = $derived(project.selectedBoardOrigin)
 
   $effect(() => {
     const id = project.conversionId
@@ -55,11 +69,19 @@
 
     if (!el || !pattern || boxWidth <= 0 || boxHeight <= 0) return
 
+    // El margen de la regla se descuenta antes de calcular la celda: si no, el
+    // patrón se dimensiona para el hueco entero y los números se salen.
+    const at = isWhole ? null : origin
+    const room = at ? MAX_COORD_GUTTER : 0
     // En símbolos la celda no baja de lo legible aunque el patrón no quepa: se
     // desplaza. Un modo que no se ve no es un modo.
-    const cellSize = Math.max(minCellFor(mode), fitCellSize(pattern, boxWidth, boxHeight))
-    const width = pattern.cols * cellSize
-    const height = pattern.rows * cellSize
+    const cellSize = Math.max(
+      minCellFor(mode),
+      fitCellSize(pattern, boxWidth - room, boxHeight - room),
+    )
+    const gutter = at && cellSize >= MIN_CELL_FOR_COORDS ? coordGutter(cellSize) : 0
+    const width = pattern.cols * cellSize + gutter
+    const height = pattern.rows * cellSize + gutter
     const dpr = Math.min(2, window.devicePixelRatio || 1)
 
     el.width = Math.round(width * dpr)
@@ -77,10 +99,25 @@
       theme: current,
       mode,
       only,
+      x0: gutter,
+      y0: gutter,
       // Una placa sola no lleva costuras: ella *es* la placa.
       board: isWhole ? project.board : undefined,
       rowsVisible: isWhole ? (rowsVisible ?? undefined) : undefined,
     })
+
+    if (gutter && at) {
+      drawCoordinates(ctx, {
+        cols: pattern.cols,
+        rows: pattern.rows,
+        cellSize,
+        colOffset: at.col,
+        rowOffset: at.row,
+        x0: gutter,
+        y0: gutter,
+        theme: current,
+      })
+    }
   })
 </script>
 
