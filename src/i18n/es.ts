@@ -9,6 +9,8 @@ export default {
   'bar.back': 'Volver al recorte',
   'bar.name': 'Nombre del patrón',
   'bar.noFile': 'Sin patrón',
+  'bar.close': 'Cerrar',
+  'bar.closeConfirm': '¿Cerrar sin guardar?',
   'bar.inventory': 'Mis cuentas',
   'bar.done': 'Listo',
   'bar.save': 'Guardar proyecto',

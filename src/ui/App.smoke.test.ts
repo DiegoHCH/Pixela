@@ -118,7 +118,21 @@ test('con una imagen abierta llega hasta el patrón', async () => {
   expect(project.total).toBe(58 * 29)
   expect(target.textContent).toContain(project.total.toLocaleString())
 
-  project.close()
+  // Desde el patrón se vuelve al inicio con el botón, que es lo que faltaba:
+  // antes había que recargar la página para quitarse la imagen de encima.
+  const cerrar = () =>
+    [...target.querySelectorAll('button')].find((b) => /^(Cerrar|¿Cerrar)/.test(b.textContent ?? ''))
+  cerrar()!.click()
+  flushSync()
+  // Un solo clic pregunta y no cierra: el patrón sigue ahí.
+  expect(project.image).not.toBeNull()
+  expect(cerrar()!.textContent?.trim()).toBe('¿Cerrar sin guardar?')
+
+  cerrar()!.click()
+  flushSync()
+  expect(project.image).toBeNull()
+  expect(target.textContent).toContain('Arrastra una imagen aquí')
+
   unmount(app)
   target.remove()
 })
