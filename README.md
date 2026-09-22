@@ -81,20 +81,23 @@ lista de la compra y guardas el proyecto donde quieras.
 
 Lo que falta, en el orden en que conviene hacerlo:
 
-1. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Medido:
-   en este Mac el caso peor son 29 ms y el hilo principal aguanta, así que no
-   urge en escritorio — pero en el teléfono sí, y es lo que separa una demo de
-   una herramienta.
-2. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
+1. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
    CDN y la primera release a `master`, que sigue en el commit del andamiaje.
-3. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
+2. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
    Hoy las tres columnas se apilan a 900 px, que funciona pero no es lo
    diseñado.
 
 Hecho después de la primera vuelta: las **coordenadas** de la vista por placa,
-numeradas como en el montaje completo (`coordLabels` en `render.ts`), y la
-**vista imprimible** — una hoja por placa con símbolos, su regla y su leyenda,
-sobre papel blanco (`lib/sheets.ts` y `ui/PrintView.svelte`).
+numeradas como en el montaje completo (`coordLabels` en `render.ts`), la **vista
+imprimible** — una hoja por placa con símbolos, su regla y su leyenda, sobre
+papel blanco (`lib/sheets.ts` y `ui/PrintView.svelte`) — y **el pipeline en un
+Web Worker** (`worker/` y `state/pipeline.svelte.ts`), con descarte de
+resultados obsoletos.
+
+Lo que costaba el pipeline en el hilo principal, medido en este Mac con una
+imagen de 1600 × 1200 y el catálogo entero: 6,7 ms a 58 × 29, 11,4 ms a 87 × 58,
+22,0 ms a 116 × 116 y 28,2 ms a 145 × 116. Un fotograma son 16,7 ms, así que de
+4 × 4 placas en adelante el tirón se veía — y en un teléfono, mucho antes.
 
 De la v2 ya está hecho **guardar y reabrir proyectos** (`.pixela.json`), que se
 adelantó porque hacía falta antes de lo previsto. Siguen fuera el editor manual

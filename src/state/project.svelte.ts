@@ -16,12 +16,12 @@ import {
 } from '../lib/detect'
 import { accentSourceOf } from '../lib/accent'
 import { isNeutral, type Adjustments } from '../lib/adjust'
-import { fidelity, isFar, type Fidelity } from '../lib/fidelity'
+import { isFar, type Fidelity } from '../lib/fidelity'
 import { MIDI_PITCH_MM, physicalSize, type PhysicalSize } from '../lib/measure'
 import { ownedPalette } from '../lib/inventory'
 import { sheetsFor, type Sheet } from '../lib/sheets'
 import { catalogPalette } from '../lib/palette'
-import { buildPattern } from '../lib/index'
+import { pipeline } from './pipeline.svelte'
 import { countBeads, totalBeads } from '../lib/quantize'
 import type { SampleMode } from '../lib/sample'
 import { DEFAULT_BAG_SIZE, shoppingList, type ShoppingList } from '../lib/shopping'
@@ -172,31 +172,81 @@ class Project {
    * que tienes sale montable. Por eso el filtro viene puesto por defecto.
    */
   get workingPalette(): Palette {
-    return this.onlyOwned ? ownedPalette(CATALOG, inventory.all) : CATALOG
+    return this.#working
   }
 
-  #result = $derived.by(() => {
+  /**
+   * Derivada y no un getter: así el array conserva su identidad mientras no
+   * cambie nada. El worker sólo recibe la paleta cuando es *otra*, y con un
+   * getter que devuelve un array nuevo cada vez eso nunca se cumpliría.
+   */
+  #working = $derived.by(() => (this.onlyOwned ? ownedPalette(CATALOG, inventory.all) : CATALOG))
+
+  /**
+   * La paleta ya sin metálicos: la que manda los índices del patrón.
+   *
+   * Filtra a mano en vez de usar `quantizable`, que revienta a propósito cuando
+   * no queda nada — es una guardia para el pipeline. Aquí quedarse sin colores
+   * es un estado legítimo: has desmarcado todo el cajón, y lo que toca es no
+   * mandar el encargo y decirlo, no lanzar un error.
+   */
+  #used = $derived.by(() => this.#working.filter((b) => !b.metallic))
+
+  /**
+   * El encargo para el worker, o `null` si no hay nada que calcular.
+   *
+   * Aquí sólo se *describe* el trabajo; despacharlo es del efecto de abajo. La
+   * separación importa: el recorte se copia —y se transfiere al worker— una
+   * vez por encargo de verdad, no cada vez que alguien lee `pattern`.
+   */
+  #job = $derived.by(() => {
     const image = this.image
     const crop = this.crop
     if (!image || !crop) return null
 
-    const palette = this.workingPalette
     // Sin colores marcados no hay patrón posible, y decirlo es mejor que
     // dibujar algo con cuentas que no están en la caja.
-    if (palette.filter((b) => !b.metallic).length === 0) return null
+    const palette = this.#used
+    if (palette.length === 0) return null
 
     const { cols, rows } = this.grid
-    const cut = cropImage(image.pixels, crop)
-    return buildPattern(cut, cols, rows, palette, {
+    return {
+      image: cropImage(image.pixels, crop),
+      cols,
+      rows,
+      palette,
       mode: this.sampleMode,
       dither: this.dither,
       maxColors: this.maxColors ?? undefined,
       adjustments: this.adjustments,
-    })
+    }
   })
 
+  constructor() {
+    // El proyecto es un único objeto de módulo y no tiene componente dueño, así
+    // que sus efectos viven en su propia raíz. Es la puerta entre el estado
+    // —sincrónico— y el pipeline, que desde que está en el worker no lo es.
+    $effect.root(() => {
+      $effect(() => {
+        const job = this.#job
+        if (job) pipeline.run(job)
+        else pipeline.clear()
+      })
+
+      // El acento se toma del patrón, y el patrón llega cuando llega.
+      $effect(() => {
+        if (pipeline.result) this.#takeAccent()
+      })
+    })
+  }
+
   get pattern(): Pattern | null {
-    return this.#result?.pattern ?? null
+    return pipeline.result?.pattern ?? null
+  }
+
+  /** Hay un patrón calculándose. El de antes sigue en pantalla mientras. */
+  get working(): boolean {
+    return pipeline.busy
   }
 
   /**
@@ -205,8 +255,12 @@ class Project {
    * el algoritmo no tiene la culpa — no hay con qué.
    */
   get fidelity(): Fidelity | null {
-    const r = this.#result
-    return r ? fidelity(r.grid, r.pattern, r.palette) : null
+    return pipeline.result?.fidelity ?? null
+  }
+
+  /** Resuelve cuando el patrón está terminado. Para exportar, guardar y probar. */
+  ready(): Promise<void> {
+    return pipeline.ready()
   }
 
   /** Si conviene decir que el parecido es flojo. */
@@ -216,7 +270,7 @@ class Project {
 
   /** La paleta con la que se cuantizó: los índices del patrón son suyos. */
   get palette(): Palette {
-    return this.#result?.palette ?? this.workingPalette
+    return pipeline.result?.palette ?? this.#used
   }
 
   get counts() {
@@ -349,6 +403,10 @@ class Project {
   }
 
   close(): void {
+    this.#wantsAccent = false
+    // El pipeline se vacía a mano y no esperando al efecto: si no, el patrón
+    // del proyecto anterior seguiría en pantalla hasta el siguiente fotograma.
+    pipeline.clear()
     this.image = null
     this.name = ''
     this.crop = null
@@ -424,10 +482,27 @@ class Project {
     else this.refreshAccent()
   }
 
-  /** Vuelve a mirar de qué color es el patrón. Sólo en momentos concretos. */
+  /**
+   * Vuelve a mirar de qué color es el patrón. Sólo en momentos concretos.
+   *
+   * Desde que el pipeline vive en un worker, al abrir una imagen todavía no hay
+   * patrón del que sacar el color: lo que se hace aquí es *pedirlo*, y se sirve
+   * en cuanto llega el primer patrón. Sin esto, abrir una imagen dejaba la app
+   * con el acento de reserva hasta que tocaras algo.
+   */
   refreshAccent(): void {
+    this.#wantsAccent = true
+    this.#takeAccent()
+  }
+
+  #wantsAccent = false
+
+  #takeAccent(): void {
+    if (!this.#wantsAccent) return
     const pattern = this.pattern
-    this.accentSource = pattern ? accentSourceOf(pattern, this.palette) : null
+    if (!pattern) return
+    this.#wantsAccent = false
+    this.accentSource = accentSourceOf(pattern, this.palette)
   }
 
   /** Del recorte al patrón. Aquí es donde caen las cuentas. */
