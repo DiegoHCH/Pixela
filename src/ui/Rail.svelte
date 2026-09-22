@@ -263,8 +263,19 @@
   <section>
     <h3>{i18n.t('rail.cost')}</h3>
     <dl>
-      <div><dt>{i18n.t('rail.cost.beads')}</dt><dd>{project.total.toLocaleString()}</dd></div>
-      <div><dt>{i18n.t('rail.cost.colors')}</dt><dd>{colors}</dd></div>
+      <!--
+        Sin patrón todavía va una raya y no un cero: mientras el worker calcula
+        el primero, decir «0 cuentas» sería mentir con aire de dato. En cuanto
+        hay uno, el de antes se queda en pantalla mientras llega el siguiente.
+      -->
+      <div>
+        <dt>{i18n.t('rail.cost.beads')}</dt>
+        <dd>{project.pattern ? project.total.toLocaleString() : '—'}</dd>
+      </div>
+      <div>
+        <dt>{i18n.t('rail.cost.colors')}</dt>
+        <dd>{project.pattern ? colors : '—'}</dd>
+      </div>
       <div><dt>{i18n.t('rail.cost.size')}</dt><dd class="sz">{formatSize(project.size)}</dd></div>
       {#if project.shopping}
         <div>

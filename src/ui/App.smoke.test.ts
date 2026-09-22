@@ -99,6 +99,10 @@ test('con una imagen abierta llega hasta el patrón', async () => {
     pixels: { width, height, data },
     source: document.createElement('canvas'),
   })
+  // El patrón se calcula fuera del hilo —o en local, aquí— así que hay que
+  // esperarlo: `flushSync` despacha el encargo y `ready` espera la respuesta.
+  flushSync()
+  await project.ready()
   flushSync()
 
   expect(target.textContent).toContain('Recorte')

@@ -1,3 +1,6 @@
+// @vitest-environment jsdom
+
+import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
 
 import { MIDI_SQUARE } from '../lib/boards'
@@ -35,6 +38,20 @@ function fakeImage(width: number, height: number): LoadedImage {
   }
 }
 
+/**
+ * Espera al patrón.
+ *
+ * Desde que el pipeline vive en un worker, cambiar un ajuste no deja el patrón
+ * hecho en la misma línea: `flushSync` despacha el encargo y `ready` espera la
+ * respuesta. En estas pruebas no hay worker de verdad —en Node no existe— así
+ * que el cálculo pasa en local, pero se contesta en otro turno igual, que es lo
+ * que hace que haya una sola forma de usar esto.
+ */
+async function settle(): Promise<void> {
+  flushSync()
+  await project.ready()
+}
+
 beforeEach(() => {
   project.close()
   project.board = MIDI_SQUARE
@@ -44,7 +61,7 @@ beforeEach(() => {
 })
 
 describe('sin imagen', () => {
-  test('no hay recorte ni patrón', () => {
+  test('no hay recorte ni patrón', async () => {
     expect(project.crop).toBeNull()
     expect(project.pattern).toBeNull()
     expect(project.total).toBe(0)
@@ -61,22 +78,25 @@ describe('al abrir una imagen', () => {
     expect(project.crop!.width).toBe(1200)
   })
 
-  test('el patrón sale del tamaño que piden las placas', () => {
+  test('el patrón sale del tamaño que piden las placas', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     expect(project.pattern).not.toBeNull()
     expect([project.pattern!.cols, project.pattern!.rows]).toEqual([58, 29])
     expect(project.total).toBe(58 * 29)
   })
 
-  test('cabe de una sentada si tienes las placas que pide', () => {
+  test('cabe de una sentada si tienes las placas que pide', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     expect(project.layout).toEqual({ cols: 2, rows: 1, total: 2 })
     expect(project.batches).toHaveLength(1)
     expect(project.fitsInOneGo).toBe(true)
   })
 
-  test('los índices del patrón son de la paleta que devuelve', () => {
+  test('los índices del patrón son de la paleta que devuelve', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     const max = Math.max(...project.counts.map((c) => c.index))
     expect(max).toBeLessThan(project.palette.length)
     // Sin metálicos: son 21 de los 23 del cajón.
@@ -85,18 +105,20 @@ describe('al abrir una imagen', () => {
 })
 
 describe('al cambiar la forma del montaje', () => {
-  test('reencuadra y cambia el tamaño del patrón', () => {
+  test('reencuadra y cambia el tamaño del patrón', async () => {
     project.open(fakeImage(1200, 800))
     project.setShape(3, 2)
+    await settle()
 
     expect([project.pattern!.cols, project.pattern!.rows]).toEqual([87, 58])
     expect(project.crop!.width / project.crop!.height).toBeCloseTo(87 / 58, 6)
     expect(project.layout).toEqual({ cols: 3, rows: 2, total: 6 })
   })
 
-  test('con más placas de las que tienes, aparecen las tandas', () => {
+  test('con más placas de las que tienes, aparecen las tandas', async () => {
     project.open(fakeImage(1200, 800))
     project.setShape(3, 2)
+    await settle()
 
     expect(project.fitsInOneGo).toBe(false)
     expect(project.batches).toHaveLength(3)
@@ -107,10 +129,11 @@ describe('al cambiar la forma del montaje', () => {
 })
 
 describe('midiendo en cuentas', () => {
-  test('el tamaño lo pones tú y la proporción sale de ahí', () => {
+  test('el tamaño lo pones tú y la proporción sale de ahí', async () => {
     project.open(fakeImage(1200, 800))
     project.setMeasure('beads')
     project.setBeadSize(40, 40)
+    await settle()
 
     expect([project.pattern!.cols, project.pattern!.rows]).toEqual([40, 40])
     expect(project.crop!.width / project.crop!.height).toBeCloseTo(1, 6)
@@ -120,28 +143,35 @@ describe('midiendo en cuentas', () => {
 })
 
 describe('al convertir', () => {
-  test('cambia de pantalla y arma la caída de las cuentas', () => {
+  test('cambia de pantalla y arma la caída de las cuentas', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     const antes = project.conversionId
+    await settle()
     project.convert()
 
+    await settle()
     expect(project.phase).toBe('pattern')
     expect(project.fallRows).toBe(29)
     expect(project.conversionId).toBe(antes + 1)
   })
 
-  test('sin patrón no hay nada que convertir', () => {
+  test('sin patrón no hay nada que convertir', async () => {
+    await settle()
     project.convert()
+    await settle()
     expect(project.phase).toBe('crop')
   })
 
-  test('volver al recorte apaga lo que sólo tiene sentido en el patrón', () => {
+  test('volver al recorte apaga lo que sólo tiene sentido en el patrón', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     project.convert()
     project.toggleIsolate(3)
     project.selectBoard(1)
     project.backToCrop()
 
+    await settle()
     expect(project.phase).toBe('crop')
     expect(project.isolated).toBeNull()
     expect(project.selectedBoard).toBeNull()
@@ -149,60 +179,96 @@ describe('al convertir', () => {
 })
 
 describe('aislar un color', () => {
-  test('se enciende y se apaga con el mismo gesto', () => {
+  test('se enciende y se apaga con el mismo gesto', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     const color = project.counts[0].index
 
     project.toggleIsolate(color)
+    await settle()
     expect(project.isolated).toBe(color)
     project.toggleIsolate(color)
+    await settle()
     expect(project.isolated).toBeNull()
   })
 })
 
 describe('la vista de imprimir', () => {
-  test('saca una hoja por placa, con lo suyo en cada una', () => {
+  test('saca una hoja por placa, con lo suyo en cada una', async () => {
     project.open(fakeImage(1200, 800))
     project.setShape(2, 1)
+    await settle()
     project.convert()
 
+    await settle()
     const sheets = project.sheets
     expect(sheets).toHaveLength(2)
     expect(sheets[1].col).toBe(29)
     expect(sheets[0].total + sheets[1].total).toBe(project.total)
   })
 
-  test('es una pantalla de paso, no un sitio donde se esté', () => {
+  test('es una pantalla de paso, no un sitio donde se esté', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     project.convert()
     project.openPrint()
+    await settle()
     expect(project.phase).toBe('print')
     // Guardar desde aquí recuerda el patrón, porque de ahí venías.
     expect(project.settings.phase).toBe('pattern')
 
     project.closePrint()
+    await settle()
     expect(project.phase).toBe('pattern')
   })
 
-  test('sin patrón no hay nada que imprimir', () => {
+  test('sin patrón no hay nada que imprimir', async () => {
     project.openPrint()
+    await settle()
     expect(project.phase).toBe('crop')
     expect(project.sheets).toEqual([])
   })
 })
 
 describe('la placa señalada', () => {
-  test('se recorta del patrón con el tamaño de la placa', () => {
+  test('se recorta del patrón con el tamaño de la placa', async () => {
     project.open(fakeImage(1200, 800))
     project.selectBoard(1)
 
+    await settle()
     const placa = project.selectedBoardPattern!
     expect([placa.cols, placa.rows]).toEqual([29, 29])
   })
 
-  test('sin placa señalada no hay recorte de placa', () => {
+  test('sin placa señalada no hay recorte de placa', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     expect(project.selectedBoardPattern).toBeNull()
+  })
+
+  test('dice en qué columna y fila del montaje empieza', async () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(3, 2)
+    await settle()
+    project.convert()
+
+    // Índice de lectura: la 0 arriba a la izquierda, la 3 al empezar la
+    // segunda fila. Son las coordenadas con las que se numera su hoja.
+    project.selectBoard(0)
+    await settle()
+    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 0 })
+    project.selectBoard(2)
+    await settle()
+    expect(project.selectedBoardOrigin).toEqual({ col: 58, row: 0 })
+    project.selectBoard(3)
+    await settle()
+    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 29 })
+
+    // Sin placa señalada no hay hoja que numerar.
+    project.selectBoard(3)
+    await settle()
+    expect(project.selectedBoard).toBeNull()
+    expect(project.selectedBoardOrigin).toBeNull()
   })
 })
 
@@ -240,24 +306,29 @@ describe('las placas que tienes', () => {
     project.setOwnedBoards(2)
   })
 
-  test('cambiarlas recalcula las tandas al momento', () => {
+  test('cambiarlas recalcula las tandas al momento', async () => {
     project.open(fakeImage(1200, 800))
     project.setShape(3, 2)
+    await settle()
     expect(project.batches).toHaveLength(3)
 
     project.setOwnedBoards(6)
+    await settle()
     expect(project.batches).toHaveLength(1)
     expect(project.fitsInOneGo).toBe(true)
 
     project.setOwnedBoards(1)
+    await settle()
     expect(project.batches).toHaveLength(6)
     project.setOwnedBoards(2)
   })
 
-  test('el tamaño de bolsa también, y la lista lo sigue', () => {
+  test('el tamaño de bolsa también, y la lista lo sigue', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     const con320 = project.shopping!.totalBags
     project.setBagSize(1000)
+    await settle()
     expect(project.bagSize).toBe(1000)
     expect(project.shopping!.totalBags).toBeLessThan(con320)
     project.setBagSize(320)
@@ -274,7 +345,7 @@ describe('el inventario manda en los colores', () => {
     expect(inventory.count).toBe(23)
   })
 
-  test('con el filtro puesto, el patrón sólo usa lo que tienes', () => {
+  test('con el filtro puesto, el patrón sólo usa lo que tienes', async () => {
     project.open(fakeImage(1200, 800))
     // 23 marcados menos los dos metálicos, que nunca entran a cuantizar.
     expect(project.palette).toHaveLength(21)
@@ -283,30 +354,35 @@ describe('el inventario manda en los colores', () => {
     }
   })
 
-  test('sin el filtro, usa el catálogo entero', () => {
+  test('sin el filtro, usa el catálogo entero', async () => {
     project.setOnlyOwned(false)
     project.open(fakeImage(1200, 800))
+    await settle()
     expect(project.palette.length).toBeGreaterThan(100)
     project.setOnlyOwned(true)
   })
 
-  test('desmarcar un color lo saca del patrón', () => {
+  test('desmarcar un color lo saca del patrón', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     const usado = project.palette[project.counts[0].index].code
 
     inventory.toggle(usado)
+    await settle()
     expect(project.palette.some((b) => b.code === usado)).toBe(false)
     expect(project.counts.every((c) => project.palette[c.index].code !== usado)).toBe(true)
 
     inventory.toggle(usado)
   })
 
-  test('sin nada marcado no hay patrón, en vez de un patrón imposible', () => {
+  test('sin nada marcado no hay patrón, en vez de un patrón imposible', async () => {
     project.open(fakeImage(1200, 800))
     inventory.clear()
+    await settle()
     expect(project.pattern).toBeNull()
     expect(project.shopping).toBeNull()
     inventory.reset()
+    await settle()
     expect(project.pattern).not.toBeNull()
   })
 
@@ -323,40 +399,50 @@ describe('el inventario manda en los colores', () => {
 })
 
 describe('el acento de la interfaz', () => {
-  test('sale del patrón al abrir la imagen', () => {
+  test('sale del patrón al abrir la imagen', async () => {
     project.open(fakeImage(1200, 800))
+    await settle()
     expect(project.accentSource).toMatch(/^#[0-9A-F]{6}$/)
   })
 
-  test('no se mueve mientras afinas los ajustes', () => {
+  test('no se mueve mientras afinas los ajustes', async () => {
     // Es el motivo del cambio: recalcularlo en cada tic hacía parpadear los
     // botones mientras los estabas usando.
     project.open(fakeImage(1200, 800))
+    await settle()
     const antes = project.accentSource
 
     project.contrast = 60
     project.saturation = -40
     project.dither = false
+    await settle()
     expect(project.accentSource).toBe(antes)
 
     project.setShape(3, 2)
+    await settle()
     expect(project.accentSource).toBe(antes)
   })
 
-  test('se vuelve a mirar al convertir', () => {
+  test('se vuelve a mirar al convertir', async () => {
     project.open(fakeImage(1200, 800))
-    project.contrast = 90
-    project.saturation = 100
+    await settle()
     const antes = project.accentSource
 
+    project.contrast = 90
+    project.saturation = 100
+    await settle()
+    // Mientras afinas no se mueve, aunque el patrón por debajo ya sea otro.
+    expect(project.accentSource).toBe(antes)
+
     project.convert()
-    // Con esos ajustes el color dominante cambia, y ahí sí se actualiza.
+    // Y al convertir sí: el patrón que vas a montar es el de ahora.
     expect(project.accentSource).not.toBe(antes)
   })
 
-  test('sin imagen no hay acento que derivar', () => {
+  test('sin imagen no hay acento que derivar', async () => {
     project.open(fakeImage(1200, 800))
     project.close()
+    await settle()
     expect(project.accentSource).toBeNull()
   })
 })
@@ -423,16 +509,19 @@ describe('guardar y volver a abrir', () => {
     expect(project.name).toBe('guardado')
   })
 
-  test('un proyecto guardado convertido vuelve al patrón', () => {
+  test('un proyecto guardado convertido vuelve al patrón', async () => {
     const imagen = fakeImage(1200, 800)
     project.open(imagen)
+    await settle()
     project.convert()
+    await settle()
     const guardado = { ...project.settings, pixela: 1 as const, savedAt: '', name: 'amy',
       image: { width: 1200, height: 800, sourceWidth: 1200, sourceHeight: 800, dataUrl: 'data:image/png;base64,AA' } }
     expect(guardado.phase).toBe('pattern')
 
     project.close()
     project.open(imagen)
+    await settle()
     expect(project.phase).toBe('crop')
 
     project.restore(imagen, guardado)
@@ -451,63 +540,11 @@ describe('guardar y volver a abrir', () => {
   })
 })
 
-describe('la vista de imprimir', () => {
-  test('saca una hoja por placa, con lo suyo en cada una', () => {
-    project.open(fakeImage(1200, 800))
-    project.setShape(2, 1)
-    project.convert()
-
-    const sheets = project.sheets
-    expect(sheets).toHaveLength(2)
-    expect(sheets[1].col).toBe(29)
-    expect(sheets[0].total + sheets[1].total).toBe(project.total)
-  })
-
-  test('es una pantalla de paso, no un sitio donde se esté', () => {
-    project.open(fakeImage(1200, 800))
-    project.convert()
-    project.openPrint()
-    expect(project.phase).toBe('print')
-    // Guardar desde aquí recuerda el patrón, porque de ahí venías.
-    expect(project.settings.phase).toBe('pattern')
-
-    project.closePrint()
-    expect(project.phase).toBe('pattern')
-  })
-
-  test('sin patrón no hay nada que imprimir', () => {
-    project.openPrint()
-    expect(project.phase).toBe('crop')
-    expect(project.sheets).toEqual([])
-  })
-})
-
-describe('la placa señalada', () => {
-  test('dice en qué columna y fila del montaje empieza', () => {
-    project.open(fakeImage(1200, 800))
-    project.setShape(3, 2)
-    project.convert()
-
-    // Índice de lectura: la 0 arriba a la izquierda, la 3 al empezar la
-    // segunda fila. Son las coordenadas con las que se numera su hoja.
-    project.selectBoard(0)
-    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 0 })
-    project.selectBoard(2)
-    expect(project.selectedBoardOrigin).toEqual({ col: 58, row: 0 })
-    project.selectBoard(3)
-    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 29 })
-
-    // Sin placa señalada no hay hoja que numerar.
-    project.selectBoard(3)
-    expect(project.selectedBoard).toBeNull()
-    expect(project.selectedBoardOrigin).toBeNull()
-  })
-})
-
 describe('al cerrar', () => {
-  test('no queda nada del proyecto anterior', () => {
+  test('no queda nada del proyecto anterior', async () => {
     project.open(fakeImage(600, 600))
     project.close()
+    await settle()
     expect(project.image).toBeNull()
     expect(project.crop).toBeNull()
     expect(project.pattern).toBeNull()
