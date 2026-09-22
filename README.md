@@ -42,7 +42,11 @@ salieron del mismo algoritmo que usará la app.
   imagen se ajusta a ella.
 - **La unidad de trabajo es la tanda**, no la placa: lo que cabe a la vez en las
   placas que tienes (aquí, dos).
-- **La paleta se captura fotografiando tus cuentas.** Nada de catálogos de fábrica.
+- **La paleta sale del cajón, con los códigos del catálogo.** Los 23 colores
+  medidos mandan en la cuantización; el catálogo de Artkal S sólo pone el código
+  con el que se vuelve a comprar, siempre con «≈» delante. Capturar la paleta
+  desde una foto ya no hace falta: el inventario sobre el catálogo cubre el caso
+  real y se marca en dos toques.
 - **La interfaz no tiene color de marca**: el acento sale del patrón abierto.
 
 El porqué de cada una está en el plan. Si alguna se va a cambiar, léelo primero:
@@ -71,19 +75,32 @@ viajar al resto del pipeline: contar, dibujar y la lista de la compra. Por eso
 
 ## Lo que sigue
 
-La segunda mitad de la v1, «que quede bien»:
+Estado a 21 de septiembre de 2026. La v1 está de punta a punta: abres una
+imagen, recortas en placas, conviertes, ajustas, exportas el PNG, sacas la
+lista de la compra y guardas el proyecto donde quieras.
 
-1. Ajustes de brillo, contraste y saturación antes de cuantizar.
-2. Detección del tipo de imagen al cargar, con el modo siempre visible.
-3. La vista por tanda, con las coordenadas corridas de lado a lado y el aviso
-   de desmoldar al terminar.
-4. Modo símbolos, CSV e impresión.
-5. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Es lo
-   que separa una demo de una herramienta, y no puede saltarse.
-6. PWA: manifiesto, iconos, service worker e instalación.
+Lo que falta, en el orden en que conviene hacerlo:
 
-Y el móvil de verdad: hoja inferior de dos alturas con las tres pestañas, que
-hoy son tres columnas apiladas.
+1. **Coordenadas en la vista por placa y por tanda**, corridas de lado a lado.
+   El color ya está en el sistema (`render.ts`, `theme.coord`) y no se usa
+   todavía: es lo único que falta de la pregunta C del plan, porque el aviso de
+   desmoldar ya está en su sitio.
+2. **Vista imprimible.** Hoy sólo hay un `@media print` mínimo que fuerza el
+   tema día; no hay pantalla de impresión.
+3. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Medido:
+   en este Mac el caso peor son 29 ms y el hilo principal aguanta, así que no
+   urge en escritorio — pero en el teléfono sí, y es lo que separa una demo de
+   una herramienta.
+4. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
+   CDN y la primera release a `master`, que sigue en el commit del andamiaje.
+5. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
+   Hoy las tres columnas se apilan a 900 px, que funciona pero no es lo
+   diseñado.
+
+De la v2 ya está hecho **guardar y reabrir proyectos** (`.pixela.json`), que se
+adelantó porque hacía falta antes de lo previsto. Siguen fuera el editor manual
+de cuentas sueltas, varias paletas guardadas, comparar dos configuraciones lado
+a lado y envolverlo en Tauri.
 
 ---
 
