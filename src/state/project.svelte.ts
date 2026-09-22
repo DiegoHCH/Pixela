@@ -19,6 +19,7 @@ import { isNeutral, type Adjustments } from '../lib/adjust'
 import { fidelity, isFar, type Fidelity } from '../lib/fidelity'
 import { MIDI_PITCH_MM, physicalSize, type PhysicalSize } from '../lib/measure'
 import { ownedPalette } from '../lib/inventory'
+import { sheetsFor, type Sheet } from '../lib/sheets'
 import { catalogPalette } from '../lib/palette'
 import { buildPattern } from '../lib/index'
 import { countBeads, totalBeads } from '../lib/quantize'
@@ -51,7 +52,7 @@ export type Measure = 'boards' | 'beads'
  * Encuadrar, mirar el patrón y repasar el inventario son pantallas, no
  * pestañas. El inventario recuerda de dónde vino para volver ahí.
  */
-export type Phase = 'crop' | 'pattern' | 'inventory'
+export type Phase = 'crop' | 'pattern' | 'inventory' | 'print'
 
 /** Lo más grande que ofrece el selector de forma del montaje. */
 export const MAX_BOARDS_X = 5
@@ -281,6 +282,28 @@ class Project {
   }
 
   /**
+   * La pantalla a la que volverías si cerraras lo que tengas encima.
+   *
+   * El inventario y la vista de imprimir se abren sobre el trabajo y vuelven a
+   * él; no son sitios donde se esté. Guardar un proyecto desde el inventario
+   * tiene que recordar el patrón si el patrón estaba hecho.
+   */
+  get workingPhase(): 'crop' | 'pattern' {
+    if (this.phase === 'crop') return 'crop'
+    if (this.phase === 'pattern') return 'pattern'
+    return this.#phaseBefore === 'pattern' ? 'pattern' : 'crop'
+  }
+
+  /**
+   * Las hojas de montaje, una por placa. Se calculan al pedirlas: sólo se
+   * miran en la vista de imprimir y cuestan un recorte y un conteo por placa.
+   */
+  get sheets(): Sheet[] {
+    const pattern = this.pattern
+    return pattern ? sheetsFor(pattern, this.board) : []
+  }
+
+  /**
    * En qué columna y fila del montaje completo empieza la placa señalada.
    *
    * Es lo que hace que las coordenadas sirvan: la regla de la placa 3 numera
@@ -356,7 +379,9 @@ class Project {
       onlyOwned: this.onlyOwned,
       // El inventario no entra, pero la pantalla sí: es parte de dónde lo
       // dejaste, no de lo que tienes en el cajón.
-      phase: this.phase === 'pattern' ? ('pattern' as const) : ('crop' as const),
+      // Imprimir y el inventario no son estados del proyecto sino pantallas de
+      // paso: lo que se guarda es en cuál de las dos de verdad estabas.
+      phase: this.workingPhase,
     }
   }
 
@@ -429,6 +454,18 @@ class Project {
     // Si estabas mirando un patrón y ahora no hay colores, no hay a dónde
     // volver: el recorte sí funciona siempre.
     this.phase = this.#phaseBefore === 'pattern' && !this.pattern ? 'crop' : this.#phaseBefore
+  }
+
+  /** La vista de imprimir, que recuerda de dónde vino igual que el inventario. */
+  openPrint(): void {
+    if (this.phase === 'print' || !this.pattern) return
+    this.#phaseBefore = this.phase
+    this.phase = 'print'
+  }
+
+  closePrint(): void {
+    if (this.phase !== 'print') return
+    this.phase = this.#phaseBefore === 'crop' ? 'crop' : 'pattern'
   }
 
   backToCrop(): void {

@@ -56,7 +56,11 @@ button {
   }
 }
 
-/* La impresión usa siempre el tema día. */
+/*
+  La impresión usa siempre el tema día — y en el papel no va la app, van las
+  hojas. La ventana de la app vive en un `100vh` con `overflow: hidden`, que al
+  imprimir dejaría una sola página cortada: aquí se suelta.
+*/
 @media print {
   :root {
     color-scheme: light;
@@ -65,5 +69,25 @@ button {
   body {
     background: #ffffff;
     color: var(--ink);
+  }
+
+  .app,
+  .body,
+  .stage {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  /* El chrome se aparta: barra, columnas, tira de placas y avisos. */
+  .bar,
+  .rail,
+  .box,
+  .strip,
+  .stage-top,
+  .error {
+    display: none !important;
   }
 }

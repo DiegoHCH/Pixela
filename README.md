@@ -19,7 +19,7 @@ imagen, la vista por tanda, el modo símbolos, imprimir y el Web Worker.
 |---|---|
 | `docs/plan.html` | El plan completo: alcance, pipeline, stack, fases y las decisiones con su porqué. Diez secciones, sin preguntas abiertas. |
 | `docs/sistema-de-diseno.html` | Fundamentos, biblioteca de componentes y las 22 pantallas (14 escritorio + 8 móvil), en tema día y noche. |
-| `src/lib/` | El pipeline: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `crop.ts`, `boards.ts`, `accent.ts`, `render.ts` y `export.ts`. Sin DOM, con sus tests al lado. |
+| `src/lib/` | El pipeline y lo que se deriva de él: `color.ts`, `palette.ts`, `sample.ts`, `quantize.ts`, `crop.ts`, `boards.ts`, `accent.ts`, `render.ts`, `export.ts`, `sheets.ts` y los demás. Sin DOM, con sus tests al lado. |
 | `src/state/` | Lo que sí toca el navegador: cargar el archivo, el tema y el proyecto abierto. |
 | `src/ui/` | Las pantallas. |
 | `src/lib/paleta-de-diego.json` | Los 23 colores reales de la caja, extraídos de una foto. **Es código, no documentación**, y por eso vive aquí y no en `docs/`. |
@@ -81,21 +81,20 @@ lista de la compra y guardas el proyecto donde quieras.
 
 Lo que falta, en el orden en que conviene hacerlo:
 
-1. **Coordenadas en la vista por placa y por tanda**, corridas de lado a lado.
-   El color ya está en el sistema (`render.ts`, `theme.coord`) y no se usa
-   todavía: es lo único que falta de la pregunta C del plan, porque el aviso de
-   desmoldar ya está en su sitio.
-2. **Vista imprimible.** Hoy sólo hay un `@media print` mínimo que fuerza el
-   tema día; no hay pantalla de impresión.
-3. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Medido:
+1. **El pipeline al Web Worker**, con descarte de resultados obsoletos. Medido:
    en este Mac el caso peor son 29 ms y el hilo principal aguanta, así que no
    urge en escritorio — pero en el teléfono sí, y es lo que separa una demo de
    una herramienta.
-4. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
+2. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
    CDN y la primera release a `master`, que sigue en el commit del andamiaje.
-5. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
+3. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
    Hoy las tres columnas se apilan a 900 px, que funciona pero no es lo
    diseñado.
+
+Hecho después de la primera vuelta: las **coordenadas** de la vista por placa,
+numeradas como en el montaje completo (`coordLabels` en `render.ts`), y la
+**vista imprimible** — una hoja por placa con símbolos, su regla y su leyenda,
+sobre papel blanco (`lib/sheets.ts` y `ui/PrintView.svelte`).
 
 De la v2 ya está hecho **guardar y reabrir proyectos** (`.pixela.json`), que se
 adelantó porque hacía falta antes de lo previsto. Siguen fuera el editor manual

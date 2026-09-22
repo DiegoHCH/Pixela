@@ -160,6 +160,37 @@ describe('aislar un color', () => {
   })
 })
 
+describe('la vista de imprimir', () => {
+  test('saca una hoja por placa, con lo suyo en cada una', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(2, 1)
+    project.convert()
+
+    const sheets = project.sheets
+    expect(sheets).toHaveLength(2)
+    expect(sheets[1].col).toBe(29)
+    expect(sheets[0].total + sheets[1].total).toBe(project.total)
+  })
+
+  test('es una pantalla de paso, no un sitio donde se esté', () => {
+    project.open(fakeImage(1200, 800))
+    project.convert()
+    project.openPrint()
+    expect(project.phase).toBe('print')
+    // Guardar desde aquí recuerda el patrón, porque de ahí venías.
+    expect(project.settings.phase).toBe('pattern')
+
+    project.closePrint()
+    expect(project.phase).toBe('pattern')
+  })
+
+  test('sin patrón no hay nada que imprimir', () => {
+    project.openPrint()
+    expect(project.phase).toBe('crop')
+    expect(project.sheets).toEqual([])
+  })
+})
+
 describe('la placa señalada', () => {
   test('se recorta del patrón con el tamaño de la placa', () => {
     project.open(fakeImage(1200, 800))
@@ -417,6 +448,37 @@ describe('guardar y volver a abrir', () => {
     expect(project.name).toBe('Nami en el Sunny')
     project.setName('   ')
     expect(project.name).toBe('prueba')
+  })
+})
+
+describe('la vista de imprimir', () => {
+  test('saca una hoja por placa, con lo suyo en cada una', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(2, 1)
+    project.convert()
+
+    const sheets = project.sheets
+    expect(sheets).toHaveLength(2)
+    expect(sheets[1].col).toBe(29)
+    expect(sheets[0].total + sheets[1].total).toBe(project.total)
+  })
+
+  test('es una pantalla de paso, no un sitio donde se esté', () => {
+    project.open(fakeImage(1200, 800))
+    project.convert()
+    project.openPrint()
+    expect(project.phase).toBe('print')
+    // Guardar desde aquí recuerda el patrón, porque de ahí venías.
+    expect(project.settings.phase).toBe('pattern')
+
+    project.closePrint()
+    expect(project.phase).toBe('pattern')
+  })
+
+  test('sin patrón no hay nada que imprimir', () => {
+    project.openPrint()
+    expect(project.phase).toBe('crop')
+    expect(project.sheets).toEqual([])
   })
 })
 

@@ -15,6 +15,7 @@
   import Inventory from './Inventory.svelte'
   import PatternPreview from './PatternPreview.svelte'
   import PatternStage from './PatternStage.svelte'
+  import PrintView from './PrintView.svelte'
   import Rail from './Rail.svelte'
 
   type Failure = LoadFailure | 'export' | 'project'
@@ -241,13 +242,13 @@
         existen aunque no haya ningún patrón abierto. Estaba metido dentro de la
         rama del patrón, y eso lo dejaba inalcanzable hasta convertir una imagen.
       -->
-      {#if project.phase !== 'inventory'}
+      {#if project.phase !== 'inventory' && project.phase !== 'print'}
         <button type="button" class="ghost" onclick={() => project.openInventory()}>
           {i18n.t('bar.inventory')}
         </button>
       {/if}
 
-      {#if project.image && project.phase !== 'inventory'}
+      {#if project.image && project.phase !== 'inventory' && project.phase !== 'print'}
         <button type="button" class="ghost" onclick={saveProject} disabled={saving}>
           {i18n.t('bar.save')}
         </button>
@@ -257,6 +258,13 @@
         <button type="button" class="primary" onclick={() => project.closeInventory()}>
           {i18n.t('bar.done')}
         </button>
+      {:else if project.phase === 'print'}
+        <button type="button" class="ghost" onclick={() => project.closePrint()}>
+          {i18n.t('bar.done')}
+        </button>
+        <button type="button" class="primary" onclick={() => window.print()}>
+          {i18n.t('bar.printNow')}
+        </button>
       {:else if project.phase === 'pattern'}
         <button type="button" class="ghost" onclick={() => project.backToCrop()}>
           {i18n.t('bar.back')}
@@ -264,8 +272,8 @@
         <button type="button" class="ghost" class:armed={closing} onclick={requestClose}>
           {closing ? i18n.t('bar.closeConfirm') : i18n.t('bar.close')}
         </button>
-        <button type="button" class="ghost" onclick={() => input?.click()}>
-          {i18n.t('bar.open')}
+        <button type="button" class="ghost" onclick={() => project.openPrint()}>
+          {i18n.t('bar.print')}
         </button>
         <button type="button" class="primary" disabled={exporting} onclick={exportPng}>
           {exporting
@@ -311,6 +319,8 @@
   <div class="body">
     {#if project.phase === 'inventory'}
       <Inventory />
+    {:else if project.phase === 'print'}
+      <PrintView />
     {:else}
       {#if project.image}
         <Rail />

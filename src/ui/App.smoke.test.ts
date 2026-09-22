@@ -118,6 +118,22 @@ test('con una imagen abierta llega hasta el patrón', async () => {
   expect(project.total).toBe(58 * 29)
   expect(target.textContent).toContain(project.total.toLocaleString())
 
+  // La vista de imprimir saca una hoja por placa, con su leyenda.
+  const boton = (re: RegExp) =>
+    [...target.querySelectorAll('button')].find((b) => re.test(b.textContent ?? ''))
+  boton(/^Imprimir$/)!.click()
+  flushSync()
+  expect(project.phase).toBe('print')
+  expect(target.textContent).toContain('Placa 1 de 2')
+  expect(target.textContent).toContain('Placa 2 de 2')
+  expect(target.textContent).toContain('Leyenda')
+  // Las columnas de la segunda placa son las del montaje, no las suyas.
+  expect(target.textContent).toContain('Columnas 30–58')
+
+  boton(/^Listo$/)!.click()
+  flushSync()
+  expect(project.phase).toBe('pattern')
+
   // Desde el patrón se vuelve al inicio con el botón, que es lo que faltaba:
   // antes había que recargar la página para quitarse la imagen de encima.
   const cerrar = () =>
