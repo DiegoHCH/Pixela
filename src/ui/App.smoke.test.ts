@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 /**
  * Prueba de humo, no de interfaz.
  *

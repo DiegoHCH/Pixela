@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 /**
  * Lo que se prueba aquí no es que el archivo se escriba —eso lo hace el
  * navegador— sino las tres salidas: se eligió carpeta, se canceló, o no hay

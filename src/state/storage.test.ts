@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { readNumber, readString, removeKey, writeNumber, writeString } from './storage'

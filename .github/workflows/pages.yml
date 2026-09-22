@@ -1,0 +1,61 @@
+# Publica la app en GitHub Pages.
+#
+# Sólo desde `master`, que en gitflow es producción: lo que se ve publicado es
+# lo que está taggeado, no lo último que alguien mergeó en `develop`.
+#
+# Y sólo si las pruebas y los tipos pasan. Un despliegue que no comprueba nada
+# convierte «está publicado» en «está publicado algo».
+name: pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si empujas dos veces seguidas, se publica la última y la otra se cancela.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npm run check
+
+      - name: Pruebas
+        run: npm test
+
+      - name: Construir
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - id: pages
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
 
