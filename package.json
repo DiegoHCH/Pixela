@@ -1,6 +1,6 @@
 {
   "name": "pixela",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "De imagen a patrón de hama beads. PWA sin servidor: la imagen nunca sale del equipo.",
   "private": true,
   "type": "module",
