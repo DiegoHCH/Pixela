@@ -1,5 +1,3 @@
-// @vitest-environment jsdom
-
 /**
  * Lo que se prueba aquí es el cable, no el patrón: que los resultados viejos se
  * tiran y que cerrar el proyecto no deja llegar nada de antes.

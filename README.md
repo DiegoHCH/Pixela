@@ -81,9 +81,7 @@ lista de la compra y guardas el proyecto donde quieras.
 
 Lo que falta, en el orden en que conviene hacerlo:
 
-1. **PWA y despliegue**: manifiesto, iconos, service worker, los estáticos en un
-   CDN y la primera release a `master`, que sigue en el commit del andamiaje.
-2. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
+1. **El móvil de verdad**: hoja inferior de dos alturas con las tres pestañas.
    Hoy las tres columnas se apilan a 900 px, que funciona pero no es lo
    diseñado.
 
@@ -93,6 +91,14 @@ imprimible** — una hoja por placa con símbolos, su regla y su leyenda, sobre
 papel blanco (`lib/sheets.ts` y `ui/PrintView.svelte`) — y **el pipeline en un
 Web Worker** (`worker/` y `state/pipeline.svelte.ts`), con descarte de
 resultados obsoletos.
+
+La app se publica en **GitHub Pages** —`https://diegohch.github.io/Pixela/`—
+desde `master`, con la acción de `.github/workflows/pages.yml`: comprueba tipos
+y pruebas antes de desplegar, así que «está publicado» no puede significar
+«está publicado algo». De ahí sale que `base` sea `/Pixela/` en la
+configuración; el ámbito del service worker y el `start_url` del manifiesto
+dicen lo mismo, y si alguno se desalineara la app instalada arrancaría en una
+página que no existe.
 
 Lo que costaba el pipeline en el hilo principal, medido en este Mac con una
 imagen de 1600 × 1200 y el catálogo entero: 6,7 ms a 58 × 29, 11,4 ms a 87 × 58,
