@@ -36,6 +36,37 @@
   let saving = $state(false)
   let dragDepth = 0
 
+  /** Cuánto aguanta armado el botón de cerrar antes de volver a su sitio. */
+  const CLOSE_CONFIRM_MS = 4000
+  /** El botón de cerrar, ya preguntado una vez. */
+  let closing = $state(false)
+  let closeTimer: ReturnType<typeof setTimeout> | null = null
+
+  /**
+   * Volver a la pantalla vacía. Hasta ahora sólo se llegaba recargando la
+   * página, que es pedirle al usuario que haga de botón.
+   *
+   * Cerrar tira el patrón, así que el botón pregunta: el primer clic cambia la
+   * etiqueta y el segundo cierra. Un clic de más es barato; perder media hora
+   * de ajustes por un clic mal dado, no. Y si no contestas, el botón se
+   * desarma solo en lugar de quedarse acechando.
+   */
+  function requestClose() {
+    if (!closing) {
+      closing = true
+      closeTimer = setTimeout(() => (closing = false), CLOSE_CONFIRM_MS)
+      return
+    }
+    cancelClose()
+    project.close()
+  }
+
+  function cancelClose() {
+    if (closeTimer) clearTimeout(closeTimer)
+    closeTimer = null
+    closing = false
+  }
+
   /**
    * Una sola puerta de entrada: si lo que llega es un proyecto se abre como
    * proyecto, y si es una imagen, como imagen. Vale igual arrastrando,
@@ -226,6 +257,9 @@
         <button type="button" class="ghost" onclick={() => project.backToCrop()}>
           {i18n.t('bar.back')}
         </button>
+        <button type="button" class="ghost" class:armed={closing} onclick={requestClose}>
+          {closing ? i18n.t('bar.closeConfirm') : i18n.t('bar.close')}
+        </button>
         <button type="button" class="ghost" onclick={() => input?.click()}>
           {i18n.t('bar.open')}
         </button>
@@ -237,8 +271,8 @@
               : i18n.t('bar.export')}
         </button>
       {:else if project.image}
-        <button type="button" class="ghost" onclick={() => project.close()}>
-          {i18n.t('bar.cancel')}
+        <button type="button" class="ghost" class:armed={closing} onclick={requestClose}>
+          {closing ? i18n.t('bar.closeConfirm') : i18n.t('bar.cancel')}
         </button>
         <button type="button" class="primary" onclick={() => project.convert()}>
           {i18n.t('bar.convert')}
@@ -473,6 +507,15 @@
   button:disabled {
     opacity: 0.55;
     cursor: default;
+  }
+
+  /*
+    Armado: el botón se ilumina para que se vea que el siguiente clic va en
+    serio, sin sacar un diálogo por una pregunta de seis palabras.
+  */
+  button.ghost.armed {
+    border-color: var(--accent);
+    color: var(--on-dark);
   }
 
   button.ghost {

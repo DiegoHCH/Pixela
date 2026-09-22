@@ -10,6 +10,8 @@ const en: typeof es = {
   'bar.back': 'Back to the crop',
   'bar.name': 'Pattern name',
   'bar.noFile': 'No pattern',
+  'bar.close': 'Close',
+  'bar.closeConfirm': 'Close without saving?',
   'bar.inventory': 'My beads',
   'bar.done': 'Done',
   'bar.save': 'Save project',
