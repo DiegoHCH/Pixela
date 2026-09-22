@@ -32,6 +32,12 @@ export const MIN_CELL_FOR_DETAIL = 7
  */
 export const MIN_CELL_FOR_SYMBOL = 16
 
+/**
+ * Por debajo de esto los números de la regla se tocan entre sí y estorban más
+ * de lo que ayudan. Una placa suelta en la mesa va muy por encima.
+ */
+export const MIN_CELL_FOR_COORDS = 9
+
 /** El tamaño de celda mínimo que un modo necesita para decir algo. */
 export function minCellFor(mode: RenderMode): number {
   return mode === 'color' ? 1 : MIN_CELL_FOR_SYMBOL
@@ -81,6 +87,116 @@ export interface DrawOptions {
    * entran fila a fila. Sin definir, están todas.
    */
   rowsVisible?: number
+}
+
+/**
+ * Lo más que ocupa la regla. Quien tiene que dimensionar el lienzo antes de
+ * saber el tamaño de celda reserva esto y se ahorra el círculo de «la celda
+ * depende del margen, que depende de la celda».
+ */
+export const MAX_COORD_GUTTER = 30
+
+/** Lo que ocupa la regla de coordenadas, a cada lado, a ese tamaño de celda. */
+export function coordGutter(cs: number): number {
+  return Math.round(Math.max(16, Math.min(MAX_COORD_GUTTER, cs * 1.3)))
+}
+
+/**
+ * Cada cuántas cuentas se escribe un número.
+ *
+ * Cinco es lo que usa cualquier hoja de punto de cruz, y es lo que la mano
+ * cuenta sin perderse. Con celdas pequeñas los números se pisarían, así que se
+ * pasa a diez.
+ */
+export function coordStep(cs: number): number {
+  return cs * 5 >= 60 ? 5 : 10
+}
+
+export interface CoordOptions {
+  cols: number
+  rows: number
+  cellSize: number
+  /**
+   * Dónde empieza lo dibujado dentro del patrón completo, en celdas.
+   *
+   * Es la razón de ser de todo esto: la placa 3 empieza en la columna 59 del
+   * montaje, y su regla tiene que decir 59 y no 1. Si cada placa se numerase
+   * desde uno, al juntarlas sobre la mesa no sabrías cuál va dónde.
+   */
+  colOffset?: number
+  rowOffset?: number
+  /** La esquina de la rejilla. La regla se dibuja en el margen, fuera de ella. */
+  x0?: number
+  y0?: number
+  theme?: Theme
+  print?: boolean
+}
+
+/**
+ * Los números de fila y columna, arriba y a la izquierda de la rejilla.
+ *
+ * Hay que dejarle sitio: se dibuja en `x0 - gutter` y `y0 - gutter`, así que
+ * quien llama monta el canvas con `coordGutter()` de margen.
+ */
+export function drawCoordinates(ctx: CanvasRenderingContext2D, o: CoordOptions): void {
+  const {
+    cols,
+    rows,
+    cellSize: cs,
+    colOffset = 0,
+    rowOffset = 0,
+    x0 = 0,
+    y0 = 0,
+    theme = 'day',
+    print = false,
+  } = o
+
+  if (cs < MIN_CELL_FOR_COORDS) return
+
+  const step = coordStep(cs)
+  const size = Math.round(Math.max(9, Math.min(13, cs * 0.52)))
+  ctx.fillStyle = print ? '#444444' : RENDER_THEMES[theme].coord
+  ctx.font = `600 ${size}px ${MONO}`
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'bottom'
+  for (const c of coordLabels(cols, colOffset, step)) {
+    ctx.fillText(String(colOffset + c + 1), x0 + c * cs + cs / 2, y0 - 4)
+  }
+
+  ctx.textAlign = 'right'
+  ctx.textBaseline = 'middle'
+  for (const r of coordLabels(rows, rowOffset, step)) {
+    ctx.fillText(String(rowOffset + r + 1), x0 - 5, y0 + r * cs + cs / 2)
+  }
+}
+
+/**
+ * Qué celdas llevan número, en índices de lo que se está dibujando.
+ *
+ * Tres reglas, y el orden entre ellas importa:
+ *
+ * 1. La primera va **siempre**. Es el ancla: con ella sabes que esta placa
+ *    empieza en la columna 59 del montaje, y sin ella la hoja no dice dónde va.
+ * 2. Una cada `step` cuentas, que es el esqueleto que la mano sigue al contar.
+ * 3. La última, que marca dónde acaba la placa.
+ *
+ * Y un número se cae si quedaría pegado al anterior —a una sola celda—, porque
+ * dos cifras a esa distancia se solapan. Se cae el de menos valor de los dos:
+ * el borde se ve solo, el ancla no.
+ */
+export function coordLabels(count: number, offset: number, step: number): number[] {
+  if (count <= 0) return []
+
+  const kept = [0]
+  const last = () => kept[kept.length - 1]
+
+  for (let i = 1; i < count - 1; i++) {
+    if ((offset + i + 1) % step === 0 && i - last() > 1) kept.push(i)
+  }
+  if (count > 1 && count - 1 - last() > 1) kept.push(count - 1)
+
+  return kept
 }
 
 /** Lo que ocupa un patrón en pantalla a ese tamaño de celda. */

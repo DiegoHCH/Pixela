@@ -420,6 +420,28 @@ describe('guardar y volver a abrir', () => {
   })
 })
 
+describe('la placa señalada', () => {
+  test('dice en qué columna y fila del montaje empieza', () => {
+    project.open(fakeImage(1200, 800))
+    project.setShape(3, 2)
+    project.convert()
+
+    // Índice de lectura: la 0 arriba a la izquierda, la 3 al empezar la
+    // segunda fila. Son las coordenadas con las que se numera su hoja.
+    project.selectBoard(0)
+    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 0 })
+    project.selectBoard(2)
+    expect(project.selectedBoardOrigin).toEqual({ col: 58, row: 0 })
+    project.selectBoard(3)
+    expect(project.selectedBoardOrigin).toEqual({ col: 0, row: 29 })
+
+    // Sin placa señalada no hay hoja que numerar.
+    project.selectBoard(3)
+    expect(project.selectedBoard).toBeNull()
+    expect(project.selectedBoardOrigin).toBeNull()
+  })
+})
+
 describe('al cerrar', () => {
   test('no queda nada del proyecto anterior', () => {
     project.open(fakeImage(600, 600))

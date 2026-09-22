@@ -281,6 +281,23 @@ class Project {
   }
 
   /**
+   * En qué columna y fila del montaje completo empieza la placa señalada.
+   *
+   * Es lo que hace que las coordenadas sirvan: la regla de la placa 3 numera
+   * desde la 59 porque es la columna 59 de la pieza, no la 1 de un cuadrado
+   * suelto.
+   */
+  get selectedBoardOrigin(): { col: number; row: number } | null {
+    const layout = this.layout
+    const index = this.selectedBoard
+    if (!layout || index == null) return null
+    return {
+      col: (index % layout.cols) * this.board.cols,
+      row: Math.floor(index / layout.cols) * this.board.rows,
+    }
+  }
+
+  /**
    * Abre una imagen y **propone** los ajustes según lo que es.
    *
    * Se proponen y no se imponen: quedan visibles en la columna y se cambian en
